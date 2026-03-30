@@ -1,10 +1,34 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
+### Maven / Java build output ###
+/target/
 !**/src/main/**/target/
 !**/src/test/**/target/
+/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+/out/
+*.class
+*.jar
+*.war
+*.ear
 
-### STS ###
+### Maven wrapper ###
+.mvn/wrapper/maven-wrapper.jar
+
+### Logs ###
+*.log
+logs/
+
+### Local environment / secrets ###
+.env
+.env.*
+!.env.example
+*.local
+application-local.properties
+application-*.local.properties
+src/main/resources/application-dev.properties
+!src/main/resources/application-dev.example.properties
+
+### Spring Tool Suite ###
 .apt_generated
 .classpath
 .factorypath
@@ -14,7 +38,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -25,9 +49,14 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
+
+### Optional project docs ###
+HELP.md
+
+### OS files ###
+.DS_Store
+Thumbs.db
+Desktop.ini
