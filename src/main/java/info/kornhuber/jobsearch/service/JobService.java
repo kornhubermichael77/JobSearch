@@ -1,0 +1,218 @@
+package info.kornhuber.jobsearch.service;
+
+import info.kornhuber.jobsearch.dto.CreateJobRequest;
+import info.kornhuber.jobsearch.dto.JobResponseDTO;
+import info.kornhuber.jobsearch.dto.UpdateJobRequest;
+import info.kornhuber.jobsearch.domain.entity.Address;
+import info.kornhuber.jobsearch.domain.entity.Company;
+import info.kornhuber.jobsearch.domain.entity.Job;
+import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.mapper.JobMapper;
+import info.kornhuber.jobsearch.domain.repository.AddressRepository;
+import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
+import info.kornhuber.jobsearch.domain.repository.JobRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class JobService {
+
+    private final JobRepository jobRepository;
+    private final CompanyRepository companyRepository;
+    private final AddressRepository addressRepository;
+    private final JobMapper jobMapper;
+
+    public JobService(
+            JobRepository jobRepository,
+            CompanyRepository companyRepository,
+            AddressRepository addressRepository,
+            JobMapper jobMapper
+    ) {
+        this.jobRepository = jobRepository;
+        this.companyRepository = companyRepository;
+        this.addressRepository = addressRepository;
+        this.jobMapper = jobMapper;
+    }
+
+    public List<JobResponseDTO> findAll(CommunicationStatus status, Integer companyId) {
+        return jobRepository.findAllWithCommunicationCount(status, companyId).stream()
+                .map(p -> {
+                    JobResponseDTO dto = new JobResponseDTO();
+                    dto.id = p.getId();
+                    dto.companyId = p.getCompanyId();
+                    dto.companyName = p.getCompanyName();
+                    dto.addressId = p.getAddressId();
+                    dto.city = p.getCity();
+                    dto.street = p.getStreet();
+                    dto.number = p.getNumber();
+                    dto.found = p.getFound();
+                    dto.source = p.getSource();
+                    dto.url = p.getUrl();
+                    dto.text = p.getText();
+                    dto.status = p.getStatus();
+                    dto.mail = p.getMail();
+                    dto.mailPerson = p.getMailPerson();
+                    dto.tel = p.getTel();
+                    dto.telPerson = p.getTelPerson();
+                    dto.teilzeit = p.getTeilzeit();
+                    dto.gleitzeit = p.getGleitzeit();
+                    dto.homeoffice = p.getHomeoffice();
+                    dto.features = p.getFeatures();
+                    dto.communicationCount = p.getCommunicationCount();
+                    return dto;
+                })
+                .toList();
+    }
+
+    public JobResponseDTO findById(Integer id) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job not found: " + id));
+
+        return jobMapper.toDto(job);
+    }
+
+    public JobResponseDTO create(CreateJobRequest req) {
+        Job job = new Job();
+        apply(job, req);
+        Job saved = jobRepository.save(job);
+        return jobMapper.toDto(saved);
+    }
+
+    public JobResponseDTO update(Integer id, UpdateJobRequest req) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Job not found: " + id));
+
+        apply(job, req);
+
+        Job saved = jobRepository.save(job);
+        return jobMapper.toDto(saved);
+    }
+
+    public void delete(Integer id) {
+        jobRepository.deleteById(id);
+    }
+
+    private void apply(Job job, CreateJobRequest req) {
+        Company company = resolveCompany(req);          // Hilfsmethode, siehe unten
+        Address address = resolveAddress(req, company); // Hilfsmethode, siehe unten
+
+        job.setCompany(company);
+        job.setAddress(address);
+        job.setFound(req.found);
+        job.setSource(req.source);
+        job.setUrl(req.url);
+        job.setText(req.text);
+        job.setStatus(req.status);
+        job.setMail(req.mail);
+        job.setMailPerson(req.mailPerson);
+        job.setTel(req.tel);
+        job.setTelPerson(req.telPerson);
+        job.setTeilzeit(req.teilzeit);
+        job.setGleitzeit(req.gleitzeit);
+        job.setHomeoffice(req.homeoffice);
+        job.setFeatures(req.features);
+    }
+
+    /**
+     * Apply changes from an UpdateJobRequest to a Job entity. (partielles Update!)
+     * lädt die Company, falls companyId gesetzt ist
+     * lädt die Address, falls addressId gesetzt ist
+     * prüft bei gesetzten beiden IDs, ob die Adresse wirklich zu dieser Firma gehört
+     * setzt erst danach die Werte am Job
+     */
+    private void apply(Job job, UpdateJobRequest req) {
+        Company company = job.getCompany();
+        Address address = job.getAddress();
+
+        if (req.companyId != null) {
+            company = companyRepository.findById(req.companyId)
+                    .orElseThrow(() -> new RuntimeException("Company not found: " + req.companyId));
+        }
+
+        if (req.addressId != null) {
+            address = addressRepository.findById(req.addressId)
+                    .orElseThrow(() -> new RuntimeException("Address not found: " + req.addressId));
+        }
+
+        if (company != null && address != null) {
+            if (address.getCompany() == null || !address.getCompany().getId().equals(company.getId())) {
+                throw new RuntimeException("Address does not belong to the selected company");
+            }
+        }
+
+        job.setCompany(company);
+        job.setAddress(address);
+        job.setFound(req.found);
+        job.setSource(req.source);
+        job.setUrl(req.url);
+        job.setText(req.text);
+        job.setStatus(req.status);
+        job.setMail(req.mail);
+        job.setMailPerson(req.mailPerson);
+        job.setTel(req.tel);
+        job.setTelPerson(req.telPerson);
+        job.setTeilzeit(req.teilzeit);
+        job.setGleitzeit(req.gleitzeit);
+        job.setHomeoffice(req.homeoffice);
+        job.setFeatures(req.features);
+    }
+
+    private Company resolveCompany(CreateJobRequest req) {
+        if ((req.companyId != null && req.newCompany != null)
+                || (req.companyId == null && req.newCompany == null)) {
+            throw new RuntimeException("Either known company or new company must be set");
+        }
+
+        if (req.companyId != null) {
+            return companyRepository.findById(req.companyId)
+                    .orElseThrow(() -> new RuntimeException("Company not found: " + req.companyId));
+        }
+
+        Company company = new Company();
+        company.setName(req.newCompany.name);
+        company.setMail(req.newCompany.mail);
+        company.setMailPerson(req.newCompany.mailPerson);
+        company.setTel(req.newCompany.tel);
+        company.setTelPerson(req.newCompany.telPerson);
+        company.setSummary(req.newCompany.summary);
+        company.setUrl(req.newCompany.url);
+        company.setUrlJobs(req.newCompany.urlJobs);
+
+        return companyRepository.save(company);
+    }
+
+    private Address resolveAddress(CreateJobRequest req, Company company) {
+        if (req.addressId != null && req.newAddress != null) {
+            throw new RuntimeException("Only one of addressId or newAddress may be set");
+        }
+
+        if (req.addressId != null) {
+            Address address = addressRepository.findById(req.addressId)
+                    .orElseThrow(() -> new RuntimeException("Address not found: " + req.addressId));
+
+            if (address.getCompany() == null || !address.getCompany().getId().equals(company.getId())) {
+                throw new RuntimeException("Address does not belong to the selected company");
+            }
+
+            return address;
+        }
+
+        if (req.newAddress != null) {
+            Address address = new Address();
+            address.setStreet(req.newAddress.street);
+            address.setPostcode(req.newAddress.postcode);
+            address.setCity(req.newAddress.city);
+            address.setCountry(req.newAddress.country);
+            address.setNumber(req.newAddress.number);
+            address.setHeadquarter(req.newAddress.headquarter);
+            address.setDistance(req.newAddress.distance);
+            address.setTraveltime(req.newAddress.traveltime);
+            address.setCompany(company);
+
+            return addressRepository.save(address);
+        }
+
+        return null;
+    }
+}
