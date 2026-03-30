@@ -11,6 +11,5 @@ public class UserResponseDTO {
     public String username;
     public String email;
     public Boolean enabled;
-    public String tenantDbName;
     public Set<String> roles;
 }

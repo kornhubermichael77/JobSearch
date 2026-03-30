@@ -9,4 +9,6 @@ public class LoginRequest {
 
     @NotBlank(message = "password darf nicht leer sein")
     public String password;
+
+    public boolean rememberMe;
 }

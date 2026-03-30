@@ -7,6 +7,9 @@ import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
 import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.exception.BadRequestException;
+import info.kornhuber.jobsearch.exception.ConflictException;
+import info.kornhuber.jobsearch.exception.NotFoundException;
 import info.kornhuber.jobsearch.mapper.JobMapper;
 import info.kornhuber.jobsearch.domain.repository.AddressRepository;
 import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
@@ -67,7 +70,7 @@ public class JobService {
 
     public JobResponseDTO findById(Integer id) {
         Job job = jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Job not found: " + id));
 
         return jobMapper.toDto(job);
     }
@@ -81,7 +84,7 @@ public class JobService {
 
     public JobResponseDTO update(Integer id, UpdateJobRequest req) {
         Job job = jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Job not found: " + id));
 
         apply(job, req);
 
@@ -127,17 +130,17 @@ public class JobService {
 
         if (req.companyId != null) {
             company = companyRepository.findById(req.companyId)
-                    .orElseThrow(() -> new RuntimeException("Company not found: " + req.companyId));
+                    .orElseThrow(() -> new NotFoundException("Company not found: " + req.companyId));
         }
 
         if (req.addressId != null) {
             address = addressRepository.findById(req.addressId)
-                    .orElseThrow(() -> new RuntimeException("Address not found: " + req.addressId));
+                    .orElseThrow(() -> new NotFoundException("Address not found: " + req.addressId));
         }
 
         if (company != null && address != null) {
             if (address.getCompany() == null || !address.getCompany().getId().equals(company.getId())) {
-                throw new RuntimeException("Address does not belong to the selected company");
+                throw new ConflictException("Address does not belong to the selected company");
             }
         }
 
@@ -161,12 +164,12 @@ public class JobService {
     private Company resolveCompany(CreateJobRequest req) {
         if ((req.companyId != null && req.newCompany != null)
                 || (req.companyId == null && req.newCompany == null)) {
-            throw new RuntimeException("Either known company or new company must be set");
+            throw new BadRequestException("Either known company or new company must be set");
         }
 
         if (req.companyId != null) {
             return companyRepository.findById(req.companyId)
-                    .orElseThrow(() -> new RuntimeException("Company not found: " + req.companyId));
+                    .orElseThrow(() -> new NotFoundException("Company not found: " + req.companyId));
         }
 
         Company company = new Company();
@@ -184,15 +187,15 @@ public class JobService {
 
     private Address resolveAddress(CreateJobRequest req, Company company) {
         if (req.addressId != null && req.newAddress != null) {
-            throw new RuntimeException("Only one of addressId or newAddress may be set");
+            throw new BadRequestException("Only one of addressId or newAddress may be set");
         }
 
         if (req.addressId != null) {
             Address address = addressRepository.findById(req.addressId)
-                    .orElseThrow(() -> new RuntimeException("Address not found: " + req.addressId));
+                    .orElseThrow(() -> new NotFoundException("Address not found: " + req.addressId));
 
             if (address.getCompany() == null || !address.getCompany().getId().equals(company.getId())) {
-                throw new RuntimeException("Address does not belong to the selected company");
+                throw new ConflictException("Address does not belong to the selected company");
             }
 
             return address;

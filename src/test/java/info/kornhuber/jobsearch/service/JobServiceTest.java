@@ -9,6 +9,8 @@ import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
 import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.exception.BadRequestException;
+import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.mapper.JobMapper;
 import info.kornhuber.jobsearch.domain.repository.AddressRepository;
 import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
@@ -20,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import info.kornhuber.jobsearch.domain.repository.projection.JobWithCommunicationCountProjection;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -199,7 +202,7 @@ class JobServiceTest {
         when(addressRepository.findById(20)).thenReturn(Optional.of(address2));
 
         assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(ConflictException.class)
                 .hasMessage("Address does not belong to the selected company");
 
         verify(jobRepository, never()).save(any());
@@ -214,7 +217,7 @@ class JobServiceTest {
         req.status = CommunicationStatus.OFFEN;
 
         assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage("Either known company or new company must be set");
 
         verify(jobRepository, never()).save(any());
@@ -226,7 +229,7 @@ class JobServiceTest {
         req.status = CommunicationStatus.OFFEN;
 
         assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage("Either known company or new company must be set");
 
         verify(jobRepository, never()).save(any());
@@ -244,7 +247,7 @@ class JobServiceTest {
         when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
 
         assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(BadRequestException.class)
                 .hasMessage("Only one of addressId or newAddress may be set");
 
         verify(jobRepository, never()).save(any());
@@ -333,7 +336,7 @@ class JobServiceTest {
         when(addressRepository.findById(20)).thenReturn(Optional.of(address2));
 
         assertThatThrownBy(() -> jobService.update(100, req))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(ConflictException.class)
                 .hasMessage("Address does not belong to the selected company");
 
         verify(jobRepository, never()).save(any());
@@ -352,25 +355,82 @@ class JobServiceTest {
 
     @Test
     void findAll_shouldFilterByCompanyId() {
-        when(jobRepository.findByCompany_Id(3)).thenReturn(List.of(job));
-        when(jobMapper.toDto(job)).thenReturn(jobResponse);
+        JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
+
+        when(projection.getId()).thenReturn(100);
+        when(projection.getCompanyId()).thenReturn(3);
+        when(projection.getCompanyName()).thenReturn("OpenAI GmbH");
+        when(projection.getAddressId()).thenReturn(10);
+        when(projection.getCity()).thenReturn("Wien");
+        when(projection.getStreet()).thenReturn("Hauptstraße");
+        when(projection.getNumber()).thenReturn("1");
+        when(projection.getFound()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
+        when(projection.getSource()).thenReturn("LinkedIn");
+        when(projection.getUrl()).thenReturn(null);
+        when(projection.getText()).thenReturn(null);
+        when(projection.getStatus()).thenReturn(CommunicationStatus.OFFEN);
+        when(projection.getMail()).thenReturn(null);
+        when(projection.getMailPerson()).thenReturn(null);
+        when(projection.getTel()).thenReturn(null);
+        when(projection.getTelPerson()).thenReturn(null);
+        when(projection.getTeilzeit()).thenReturn(null);
+        when(projection.getGleitzeit()).thenReturn(null);
+        when(projection.getHomeoffice()).thenReturn(null);
+        when(projection.getFeatures()).thenReturn(null);
+        when(projection.getCommunicationCount()).thenReturn(2L);
+
+        when(jobRepository.findAllWithCommunicationCount(null, 3))
+                .thenReturn(List.of(projection));
 
         List<JobResponseDTO> result = jobService.findAll(null, 3);
 
         assertThat(result).hasSize(1);
-        verify(jobRepository).findByCompany_Id(3);
+        assertThat(result.getFirst().id).isEqualTo(100);
+        assertThat(result.getFirst().companyId).isEqualTo(3);
+        assertThat(result.getFirst().status).isEqualTo(CommunicationStatus.OFFEN);
+        assertThat(result.getFirst().communicationCount).isEqualTo(2L);
+
+        verify(jobRepository).findAllWithCommunicationCount(null, 3);
     }
 
     @Test
     void findAll_shouldFilterByStatusAndCompanyId() {
-        when(jobRepository.findByStatusAndCompany_Id(CommunicationStatus.OFFEN, 3))
-                .thenReturn(List.of(job));
-        when(jobMapper.toDto(job)).thenReturn(jobResponse);
+        JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
+
+        when(projection.getId()).thenReturn(100);
+        when(projection.getCompanyId()).thenReturn(3);
+        when(projection.getCompanyName()).thenReturn("OpenAI GmbH");
+        when(projection.getAddressId()).thenReturn(10);
+        when(projection.getCity()).thenReturn("Wien");
+        when(projection.getStreet()).thenReturn("Hauptstraße");
+        when(projection.getNumber()).thenReturn("1");
+        when(projection.getFound()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
+        when(projection.getSource()).thenReturn("LinkedIn");
+        when(projection.getUrl()).thenReturn(null);
+        when(projection.getText()).thenReturn(null);
+        when(projection.getStatus()).thenReturn(CommunicationStatus.OFFEN);
+        when(projection.getMail()).thenReturn(null);
+        when(projection.getMailPerson()).thenReturn(null);
+        when(projection.getTel()).thenReturn(null);
+        when(projection.getTelPerson()).thenReturn(null);
+        when(projection.getTeilzeit()).thenReturn(null);
+        when(projection.getGleitzeit()).thenReturn(null);
+        when(projection.getHomeoffice()).thenReturn(null);
+        when(projection.getFeatures()).thenReturn(null);
+        when(projection.getCommunicationCount()).thenReturn(3L);
+
+        when(jobRepository.findAllWithCommunicationCount(CommunicationStatus.OFFEN, 3))
+                .thenReturn(List.of(projection));
 
         List<JobResponseDTO> result = jobService.findAll(CommunicationStatus.OFFEN, 3);
 
         assertThat(result).hasSize(1);
-        verify(jobRepository).findByStatusAndCompany_Id(CommunicationStatus.OFFEN, 3);
+        assertThat(result.getFirst().id).isEqualTo(100);
+        assertThat(result.getFirst().companyId).isEqualTo(3);
+        assertThat(result.getFirst().status).isEqualTo(CommunicationStatus.OFFEN);
+        assertThat(result.getFirst().communicationCount).isEqualTo(3L);
+
+        verify(jobRepository).findAllWithCommunicationCount(CommunicationStatus.OFFEN, 3);
     }
 
 

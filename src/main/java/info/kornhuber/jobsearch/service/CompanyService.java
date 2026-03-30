@@ -1,59 +1,70 @@
 package info.kornhuber.jobsearch.service;
 
-import info.kornhuber.jobsearch.domain.repository.projection.CompanyWithJobCountProjection;
+import info.kornhuber.jobsearch.domain.entity.Company;
+import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
+import info.kornhuber.jobsearch.domain.repository.JobRepository;
+import info.kornhuber.jobsearch.domain.repository.projection.CompanyJobCountProjection;
 import info.kornhuber.jobsearch.dto.CompanyResponseDTO;
 import info.kornhuber.jobsearch.dto.CreateCompanyRequest;
 import info.kornhuber.jobsearch.dto.UpdateCompanyRequest;
-import info.kornhuber.jobsearch.domain.entity.Company;
 import info.kornhuber.jobsearch.mapper.CompanyMapper;
-import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import info.kornhuber.jobsearch.exception.NotFoundException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;
+    private final JobRepository jobRepository;
 
     public CompanyService(
             CompanyRepository companyRepository,
-            CompanyMapper companyMapper
+            CompanyMapper companyMapper,
+            JobRepository jobRepository
     ) {
         this.companyRepository = companyRepository;
         this.companyMapper = companyMapper;
+        this.jobRepository = jobRepository;
     }
 
     @Transactional(readOnly = true)
     public CompanyResponseDTO findById(Integer id) {
         Company company = companyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Company not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Company not found: " + id));
 
-        return companyMapper.toDto(company);
+        CompanyResponseDTO dto = companyMapper.toDto(company);
+        dto.jobCount = jobRepository.countByCompany_Id(company.getId());
+        return dto;
     }
 
     @Transactional(readOnly = true)
     public List<CompanyResponseDTO> findAll() {
-        return companyRepository.findAllWithJobCount().stream()
-                .map(p -> {
-                    CompanyResponseDTO dto = new CompanyResponseDTO();
-                    dto.id = p.getId();
-                    dto.name = p.getName();
-                    dto.mail = p.getMail();
-                    dto.mailPerson = p.getMailPerson();
-                    dto.tel = p.getTel();
-                    dto.telPerson = p.getTelPerson();
-                    dto.summary = p.getSummary();
-                    dto.url = p.getUrl();
-                    dto.urlJobs = p.getUrlJobs();
-                    dto.jobCount = p.getJobCount();
+        List<Company> companies = companyRepository.findAll();
 
-                    // bewusst KEINE addresses hier -> List View schlank halten
-                    dto.addresses = List.of();
+        if (companies.isEmpty()) {
+            return List.of();
+        }
 
+        List<Integer> companyIds = companies.stream()
+                .map(Company::getId)
+                .toList();
+
+        Map<Integer, Long> jobCountByCompanyId = jobRepository.countJobsByCompanyIds(companyIds).stream()
+                .collect(Collectors.toMap(
+                        CompanyJobCountProjection::getCompanyId,
+                        CompanyJobCountProjection::getJobCount
+                ));
+
+        return companies.stream()
+                .map(company -> {
+                    CompanyResponseDTO dto = companyMapper.toDto(company);
+                    dto.jobCount = jobCountByCompanyId.getOrDefault(company.getId(), 0L);
                     return dto;
                 })
                 .toList();
@@ -64,22 +75,26 @@ public class CompanyService {
         applyFields(company, req);
 
         Company saved = companyRepository.save(company);
-        return companyMapper.toDto(saved);
+        CompanyResponseDTO dto = companyMapper.toDto(saved);
+        dto.jobCount = 0L;
+        return dto;
     }
 
     public CompanyResponseDTO update(Integer id, UpdateCompanyRequest req) {
         Company company = companyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Company not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Company not found: " + id));
 
         applyFields(company, req);
 
         Company saved = companyRepository.save(company);
-        return companyMapper.toDto(saved);
+        CompanyResponseDTO dto = companyMapper.toDto(saved);
+        dto.jobCount = jobRepository.countByCompany_Id(saved.getId());
+        return dto;
     }
 
     public void delete(Integer id) {
         Company company = companyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Company not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Company not found: " + id));
 
         companyRepository.delete(company);
     }

@@ -37,7 +37,7 @@ CREATE TABLE job (
                      mail VARCHAR(150) DEFAULT NULL,
                      mail_person VARCHAR(100) DEFAULT NULL,
                      source VARCHAR(150) DEFAULT NULL,
-                     status TINYINT DEFAULT NULL,
+                     status VARCHAR(150) DEFAULT NULL,
                      teilzeit VARCHAR(100) DEFAULT NULL,
                      tel VARCHAR(25) DEFAULT NULL,
                      tel_person VARCHAR(100) DEFAULT NULL,

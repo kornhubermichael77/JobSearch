@@ -5,6 +5,7 @@ import info.kornhuber.jobsearch.config.GlobalExceptionHandler;
 import info.kornhuber.jobsearch.dto.JobResponseDTO;
 import info.kornhuber.jobsearch.enums.CommunicationStatus;
 import info.kornhuber.jobsearch.service.JobService;
+import info.kornhuber.jobsearch.exception.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -119,7 +120,7 @@ class JobControllerTest {
     @Test
     void create_shouldReturn400_whenBusinessRuleFails() throws Exception {
         when(jobService.create(any()))
-                .thenThrow(new RuntimeException("Either known company or new company must be set"));
+                .thenThrow(new BadRequestException("Either known company or new company must be set"));
 
         String json = """
                 {

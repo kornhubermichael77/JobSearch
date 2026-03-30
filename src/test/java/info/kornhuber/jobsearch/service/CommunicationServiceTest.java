@@ -4,9 +4,11 @@ import info.kornhuber.jobsearch.dto.CommunicationResponseDTO;
 import info.kornhuber.jobsearch.dto.CreateCommunicationRequest;
 import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.domain.entity.PhoneCommunication;
+import info.kornhuber.jobsearch.dto.UpdateCommunicationRequest;
 import info.kornhuber.jobsearch.enums.CommunicationStatus;
 import info.kornhuber.jobsearch.enums.CommunicationType;
 import info.kornhuber.jobsearch.enums.CommunicationDirection;
+import info.kornhuber.jobsearch.exception.NotFoundException;
 import info.kornhuber.jobsearch.mapper.CommunicationMapper;
 import info.kornhuber.jobsearch.domain.repository.CommunicationRepository;
 import info.kornhuber.jobsearch.domain.repository.JobRepository;
@@ -45,7 +47,8 @@ class CommunicationServiceTest {
 
     private Job job;
     private PhoneCommunication phoneCommunication;
-    private CreateCommunicationRequest phoneRequest;
+    private CreateCommunicationRequest createPhoneRequest;
+    private UpdateCommunicationRequest updatePhoneRequest;
     private CommunicationResponseDTO phoneResponseDto;
 
     @BeforeEach
@@ -65,17 +68,27 @@ class CommunicationServiceTest {
         phoneCommunication.setNumber("+43 660 1234567");
         phoneCommunication.setDirection(CommunicationDirection.OUT);
 
-        phoneRequest = new CreateCommunicationRequest();
-        phoneRequest.type = CommunicationType.PHONE;
-        phoneRequest.jobId = 10;
-        phoneRequest.date = LocalDateTime.of(2026, 3, 20, 10, 30);
-        phoneRequest.person = "Max Mustermann";
-        phoneRequest.role = "HR";
-        phoneRequest.content = "Telefonisches Erstgespräch";
-        phoneRequest.sidemarks = "freundlich";
-        phoneRequest.status = CommunicationStatus.TERMINVEREINBARUNG;
-        phoneRequest.number = "+43 660 1234567";
-        phoneRequest.direction = CommunicationDirection.OUT;
+        createPhoneRequest = new CreateCommunicationRequest();
+        createPhoneRequest.jobId = 10;
+        createPhoneRequest.type = CommunicationType.PHONE;
+        createPhoneRequest.date = LocalDateTime.of(2026, 3, 20, 10, 30);
+        createPhoneRequest.person = "Max Mustermann";
+        createPhoneRequest.role = "HR";
+        createPhoneRequest.content = "Telefonisches Erstgespräch";
+        createPhoneRequest.sidemarks = "freundlich";
+        createPhoneRequest.status = CommunicationStatus.TERMINVEREINBARUNG;
+        createPhoneRequest.number = "+43 660 1234567";
+        createPhoneRequest.direction = CommunicationDirection.OUT;
+
+        updatePhoneRequest = new UpdateCommunicationRequest();
+        updatePhoneRequest.date = LocalDateTime.of(2026, 3, 20, 10, 30);
+        updatePhoneRequest.person = "Max Mustermann";
+        updatePhoneRequest.role = "HR";
+        updatePhoneRequest.content = "Telefonisches Erstgespräch";
+        updatePhoneRequest.sidemarks = "freundlich";
+        updatePhoneRequest.status = CommunicationStatus.TERMINVEREINBARUNG;
+        updatePhoneRequest.number = "+43 660 1234567";
+        updatePhoneRequest.direction = CommunicationDirection.OUT;
 
         phoneResponseDto = new CommunicationResponseDTO();
         phoneResponseDto.id = 100;
@@ -93,12 +106,12 @@ class CommunicationServiceTest {
 
     @Test
     void create_shouldCreatePhoneCommunicationAndReturnDto() {
-        when(communicationFactory.create(phoneRequest)).thenReturn(phoneCommunication);
+        when(communicationFactory.create(createPhoneRequest)).thenReturn(phoneCommunication);
         when(jobRepository.findById(10)).thenReturn(Optional.of(job));
         when(communicationRepository.save(phoneCommunication)).thenReturn(phoneCommunication);
         when(communicationMapper.toDto(phoneCommunication)).thenReturn(phoneResponseDto);
 
-        CommunicationResponseDTO result = communicationService.create(phoneRequest);
+        CommunicationResponseDTO result = communicationService.create(createPhoneRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.id).isEqualTo(100);
@@ -107,7 +120,7 @@ class CommunicationServiceTest {
         assertThat(result.number).isEqualTo("+43 660 1234567");
         assertThat(result.direction).isEqualTo(CommunicationDirection.OUT);
 
-        verify(communicationFactory).create(phoneRequest);
+        verify(communicationFactory).create(createPhoneRequest);
         verify(jobRepository).findById(10);
         verify(communicationRepository).save(phoneCommunication);
         verify(communicationMapper).toDto(phoneCommunication);
@@ -115,12 +128,12 @@ class CommunicationServiceTest {
 
     @Test
     void create_shouldApplyCommonAndSpecificFieldsBeforeSave() {
-        when(communicationFactory.create(phoneRequest)).thenReturn(phoneCommunication);
+        when(communicationFactory.create(createPhoneRequest)).thenReturn(phoneCommunication);
         when(jobRepository.findById(10)).thenReturn(Optional.of(job));
         when(communicationRepository.save(any(PhoneCommunication.class))).thenReturn(phoneCommunication);
         when(communicationMapper.toDto(phoneCommunication)).thenReturn(phoneResponseDto);
 
-        communicationService.create(phoneRequest);
+        communicationService.create(createPhoneRequest);
 
         ArgumentCaptor<PhoneCommunication> captor = ArgumentCaptor.forClass(PhoneCommunication.class);
         verify(communicationRepository).save(captor.capture());
@@ -128,23 +141,23 @@ class CommunicationServiceTest {
         PhoneCommunication saved = captor.getValue();
 
         assertThat(saved.getJob()).isEqualTo(job);
-        assertThat(saved.getDate()).isEqualTo(phoneRequest.date);
-        assertThat(saved.getPerson()).isEqualTo(phoneRequest.person);
-        assertThat(saved.getRole()).isEqualTo(phoneRequest.role);
-        assertThat(saved.getContent()).isEqualTo(phoneRequest.content);
-        assertThat(saved.getSidemarks()).isEqualTo(phoneRequest.sidemarks);
-        assertThat(saved.getStatus()).isEqualTo(phoneRequest.status);
-        assertThat(saved.getNumber()).isEqualTo(phoneRequest.number);
-        assertThat(saved.getDirection()).isEqualTo(phoneRequest.direction);
+        assertThat(saved.getDate()).isEqualTo(createPhoneRequest.date);
+        assertThat(saved.getPerson()).isEqualTo(createPhoneRequest.person);
+        assertThat(saved.getRole()).isEqualTo(createPhoneRequest.role);
+        assertThat(saved.getContent()).isEqualTo(createPhoneRequest.content);
+        assertThat(saved.getSidemarks()).isEqualTo(createPhoneRequest.sidemarks);
+        assertThat(saved.getStatus()).isEqualTo(createPhoneRequest.status);
+        assertThat(saved.getNumber()).isEqualTo(createPhoneRequest.number);
+        assertThat(saved.getDirection()).isEqualTo(createPhoneRequest.direction);
     }
 
     @Test
     void create_shouldThrowWhenJobDoesNotExist() {
-        when(communicationFactory.create(phoneRequest)).thenReturn(phoneCommunication);
+        when(communicationFactory.create(createPhoneRequest)).thenReturn(phoneCommunication);
         when(jobRepository.findById(10)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> communicationService.create(phoneRequest))
-                .isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> communicationService.create(createPhoneRequest))
+                .isInstanceOf(NotFoundException.class)
                 .hasMessage("Job not found: 10");
 
         verify(communicationRepository, never()).save(any());
@@ -153,11 +166,10 @@ class CommunicationServiceTest {
     @Test
     void update_shouldUpdateExistingCommunicationAndReturnDto() {
         when(communicationRepository.findById(100)).thenReturn(Optional.of(phoneCommunication));
-        when(communicationMapper.toDto(phoneCommunication)).thenReturn(phoneResponseDto);
-        when(jobRepository.findById(10)).thenReturn(Optional.of(job));
         when(communicationRepository.save(phoneCommunication)).thenReturn(phoneCommunication);
+        when(communicationMapper.toDto(phoneCommunication)).thenReturn(phoneResponseDto);
 
-        CommunicationResponseDTO result = communicationService.update(100, phoneRequest);
+        CommunicationResponseDTO result = communicationService.update(100, updatePhoneRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.type).isEqualTo(CommunicationType.PHONE);
@@ -165,24 +177,8 @@ class CommunicationServiceTest {
         assertThat(result.direction).isEqualTo(CommunicationDirection.OUT);
 
         verify(communicationRepository).findById(100);
-        verify(jobRepository).findById(10);
         verify(communicationRepository).save(phoneCommunication);
-    }
-
-    @Test
-    void update_shouldThrowWhenTypeChanges() {
-        CommunicationResponseDTO existingDto = new CommunicationResponseDTO();
-        existingDto.id = 100;
-        existingDto.type = CommunicationType.MAIL;
-
-        when(communicationRepository.findById(100)).thenReturn(Optional.of(phoneCommunication));
-        when(communicationMapper.toDto(phoneCommunication)).thenReturn(existingDto);
-
-        assertThatThrownBy(() -> communicationService.update(100, phoneRequest))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Communication-Typ darf nicht geändert werden");
-
-        verify(communicationRepository, never()).save(any());
+        verify(communicationMapper, atLeastOnce()).toDto(phoneCommunication);
     }
 
     @Test

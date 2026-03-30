@@ -1,8 +1,6 @@
 package info.kornhuber.jobsearch.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
+import info.kornhuber.jobsearch.dto.UpdateCommunicationRequest;
 import info.kornhuber.jobsearch.dto.CommunicationResponseDTO;
 import info.kornhuber.jobsearch.dto.CreateCommunicationRequest;
 import info.kornhuber.jobsearch.service.CommunicationService;
@@ -32,7 +30,7 @@ public class CommunicationController {
     @PutMapping("/{id}")
     public CommunicationResponseDTO update(
             @PathVariable Integer id,
-            @Valid @RequestBody CreateCommunicationRequest req
+            @Valid @RequestBody UpdateCommunicationRequest req
     ) {
         return service.update(id, req);
     }

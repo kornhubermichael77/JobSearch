@@ -36,12 +36,18 @@ public class TenantResolverFilter extends OncePerRequestFilter {
 
                 String username = authentication.getName();
 
-                userRepository.findByUsername(username).ifPresent(user ->
-                        TenantContext.setTenant(user.getTenantDbName())
-                );
+                UserEntity user = userRepository.findByUsername(username)
+                        .orElseThrow(() -> new RuntimeException("User not found for tenant: " + username));
+
+                if (user.getTenantDbName() == null) {
+                    throw new RuntimeException("User has no tenant assigned: " + username);
+                }
+
+                TenantContext.setTenant(user.getTenantDbName());
             }
 
             filterChain.doFilter(request, response);
+
         } finally {
             TenantContext.clear();
         }

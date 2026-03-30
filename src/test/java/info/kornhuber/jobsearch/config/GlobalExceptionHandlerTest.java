@@ -1,5 +1,8 @@
 package info.kornhuber.jobsearch.config;
 
+import info.kornhuber.jobsearch.exception.BadRequestException;
+import info.kornhuber.jobsearch.exception.ConflictException;
+import info.kornhuber.jobsearch.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -7,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GlobalExceptionHandlerTest {
 
@@ -18,12 +22,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleRuntimeException_shouldReturnErrorMessage() {
-        RuntimeException ex = new RuntimeException("Communication not found: 99");
+    void handleNotFoundReturns404StyleBody() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
-        Map<String, Object> result = handler.handleRuntimeException(ex);
+        Map<String, Object> response = handler.handleNotFound(new NotFoundException("Company not found: 1"));
 
-        assertThat(result).containsEntry("error", "Communication not found: 99");
+        assertEquals("Company not found: 1", response.get("error"));
     }
 
     @Test
@@ -34,5 +38,23 @@ class GlobalExceptionHandlerTest {
         Map<String, Object> result = handler.handleJsonParseError(ex);
 
         assertThat(result).containsEntry("error", "Ungültiger Enum-Wert im Request");
+    }
+
+    @Test
+    void handleBadRequestReturnsErrorBody() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        Map<String, Object> response = handler.handleBadRequest(new BadRequestException("Ungültiger Request"));
+
+        assertEquals("Ungültiger Request", response.get("error"));
+    }
+
+    @Test
+    void handleConflictReturnsErrorBody() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        Map<String, Object> response = handler.handleConflict(new ConflictException("Email existiert bereits"));
+
+        assertEquals("Email existiert bereits", response.get("error"));
     }
 }

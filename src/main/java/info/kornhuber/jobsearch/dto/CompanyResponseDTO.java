@@ -12,7 +12,7 @@ public class CompanyResponseDTO {
     public String summary;
     public String url;
     public String urlJobs;
+
     public Long jobCount;
-    // optional direkt mitliefern:
     public List<AddressResponseDTO> addresses;
 }
