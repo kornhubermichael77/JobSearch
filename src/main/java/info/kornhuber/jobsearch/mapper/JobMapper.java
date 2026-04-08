@@ -26,6 +26,11 @@ public class JobMapper {
             dto.city = address.getCity();
             dto.street = address.getStreet();
             dto.number = address.getNumber();
+            dto.postcode = address.getPostcode();
+            dto.country = address.getCountry();
+            dto.headquarter = address.getHeadquarter();
+            dto.distance = address.getDistance();
+            dto.traveltime = address.getTraveltime();
         }
 
         dto.found = job.getFound();

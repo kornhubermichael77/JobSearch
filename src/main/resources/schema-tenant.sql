@@ -3,7 +3,7 @@ CREATE TABLE company (
                          mail VARCHAR(150) DEFAULT NULL,
                          mail_person VARCHAR(100) DEFAULT NULL,
                          name VARCHAR(100) DEFAULT NULL,
-                         summary TINYTEXT DEFAULT NULL,
+                         summary VARCHAR(5000) DEFAULT NULL,
                          tel VARCHAR(25) DEFAULT NULL,
                          tel_person VARCHAR(100) DEFAULT NULL,
                          url VARCHAR(500) DEFAULT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE address (
 
 CREATE TABLE job (
                      id_pk INT NOT NULL AUTO_INCREMENT,
-                     features TINYTEXT DEFAULT NULL,
+                     features VARCHAR(2500) DEFAULT NULL,
                      found DATETIME(6) DEFAULT NULL,
                      gleitzeit VARCHAR(100) DEFAULT NULL,
                      homeoffice VARCHAR(100) DEFAULT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE job (
                      teilzeit VARCHAR(100) DEFAULT NULL,
                      tel VARCHAR(25) DEFAULT NULL,
                      tel_person VARCHAR(100) DEFAULT NULL,
-                     text TINYTEXT DEFAULT NULL,
+                     text VARCHAR(10000) DEFAULT NULL,
                      url VARCHAR(500) DEFAULT NULL,
                      a_id_fk INT DEFAULT NULL,
                      c_id_fk INT DEFAULT NULL,
@@ -56,11 +56,11 @@ CREATE TABLE job (
 
 CREATE TABLE communication (
                                id_pk INT NOT NULL AUTO_INCREMENT,
-                               content TINYTEXT DEFAULT NULL,
+                               content VARCHAR(10000) DEFAULT NULL,
                                date DATETIME(6) DEFAULT NULL,
                                person VARCHAR(100) DEFAULT NULL,
                                role VARCHAR(100) DEFAULT NULL,
-                               sidemarks TINYTEXT DEFAULT NULL,
+                               sidemarks VARCHAR(2500) DEFAULT NULL,
                                status ENUM(
         'ABSAGE',
         'BEWERBUNG_AKTUALISIERT',
@@ -88,7 +88,7 @@ CREATE TABLE communication (
 
 CREATE TABLE interview (
                            comm_id_pk INT NOT NULL,
-                           conclusion TINYTEXT DEFAULT NULL,
+                           conclusion VARCHAR(2500) DEFAULT NULL,
                            duration VARCHAR(150) DEFAULT NULL,
                            PRIMARY KEY (comm_id_pk),
                            CONSTRAINT fk_interview_communication
@@ -98,7 +98,7 @@ CREATE TABLE interview (
 CREATE TABLE mail (
                       comm_id_pk INT NOT NULL,
                       address VARCHAR(150) DEFAULT NULL,
-                      attachments TINYTEXT DEFAULT NULL,
+                      attachments VARCHAR(500) DEFAULT NULL,
                       subject VARCHAR(100) DEFAULT NULL,
                       direction ENUM('IN', 'OUT') NOT NULL,
                       PRIMARY KEY (comm_id_pk),
@@ -126,7 +126,7 @@ CREATE TABLE talk (
 
 CREATE TABLE trial (
                        comm_id_pk INT NOT NULL,
-                       conclusion TINYTEXT DEFAULT NULL,
+                       conclusion VARCHAR(2500) DEFAULT NULL,
                        duration VARCHAR(150) DEFAULT NULL,
                        PRIMARY KEY (comm_id_pk),
                        CONSTRAINT fk_trial_communication

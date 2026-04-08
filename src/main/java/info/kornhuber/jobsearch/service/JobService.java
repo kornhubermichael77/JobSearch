@@ -2,6 +2,7 @@ package info.kornhuber.jobsearch.service;
 
 import info.kornhuber.jobsearch.dto.CreateJobRequest;
 import info.kornhuber.jobsearch.dto.JobResponseDTO;
+import info.kornhuber.jobsearch.dto.UpdateJobAddressRequest;
 import info.kornhuber.jobsearch.dto.UpdateJobRequest;
 import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
@@ -47,8 +48,13 @@ public class JobService {
                     dto.companyName = p.getCompanyName();
                     dto.addressId = p.getAddressId();
                     dto.city = p.getCity();
+                    dto.postcode = p.getPostcode();
+                    dto.country = p.getCountry();
                     dto.street = p.getStreet();
                     dto.number = p.getNumber();
+                    dto.headquarter = p.getHeadquarter();
+                    dto.distance = p.getDistance();
+                    dto.traveltime = p.getTraveltime();
                     dto.found = p.getFound();
                     dto.source = p.getSource();
                     dto.url = p.getUrl();
@@ -92,8 +98,33 @@ public class JobService {
         return jobMapper.toDto(saved);
     }
 
+    public JobResponseDTO updateJobAddressId(Integer id, UpdateJobAddressRequest req) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Job not found: " + id));
+
+        if (req.addressId != null) {
+            Address address = addressRepository.findById(req.addressId)
+                    .orElseThrow(() -> new NotFoundException("Address not found: " + req.addressId));
+
+            if (job.getCompany() != null) {
+                if (address.getCompany() == null || !address.getCompany().getId().equals(job.getCompany().getId())) {
+                    address.setCompany(job.getCompany());
+                }
+            }
+            job.setAddress(address);
+        } else {
+            job.setAddress(null);
+        }
+
+        Job saved = jobRepository.save(job);
+        return jobMapper.toDto(saved);
+    }
+
     public void delete(Integer id) {
-        jobRepository.deleteById(id);
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Job not found: " + id));
+
+        jobRepository.delete(job);
     }
 
     private void apply(Job job, CreateJobRequest req) {
@@ -140,7 +171,10 @@ public class JobService {
 
         if (company != null && address != null) {
             if (address.getCompany() == null || !address.getCompany().getId().equals(company.getId())) {
-                throw new ConflictException("Address does not belong to the selected company");
+
+                address.setCompany(company);
+                addressRepository.save(address);
+                //                throw new ConflictException("Address does not belong to the selectedd company");
             }
         }
 
@@ -189,13 +223,16 @@ public class JobService {
         if (req.addressId != null && req.newAddress != null) {
             throw new BadRequestException("Only one of addressId or newAddress may be set");
         }
-
+        // Todo: req.newAddress wird ev nie der Fall sein, weil Jobs nie gleichzeitig eine Adresse mitanlegen! Sauber entfernen!
         if (req.addressId != null) {
             Address address = addressRepository.findById(req.addressId)
                     .orElseThrow(() -> new NotFoundException("Address not found: " + req.addressId));
 
-            if (address.getCompany() == null || !address.getCompany().getId().equals(company.getId())) {
+            if (!address.getCompany().getId().equals(company.getId())) {
                 throw new ConflictException("Address does not belong to the selected company");
+            } else if (address.getCompany() == null) {
+                address.setCompany(company);
+                address = addressRepository.save(address);
             }
 
             return address;

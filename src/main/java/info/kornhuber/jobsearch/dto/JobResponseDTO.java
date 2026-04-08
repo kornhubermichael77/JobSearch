@@ -13,9 +13,15 @@ public class JobResponseDTO {
     public String companyName;
 
     public Integer addressId;
-    public String city;
+
     public String street;
     public String number;
+    public String postcode;
+    public String city;
+    public String country;
+    public Boolean headquarter;
+    public Double distance;
+    public LocalDateTime traveltime;
 
     public LocalDateTime found;
     public String source;

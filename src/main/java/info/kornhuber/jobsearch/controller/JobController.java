@@ -2,12 +2,14 @@ package info.kornhuber.jobsearch.controller;
 
 import info.kornhuber.jobsearch.dto.CreateJobRequest;
 import info.kornhuber.jobsearch.dto.JobResponseDTO;
+import info.kornhuber.jobsearch.dto.UpdateJobAddressRequest;
 import info.kornhuber.jobsearch.dto.UpdateJobRequest;
 import info.kornhuber.jobsearch.enums.CommunicationStatus;
 import info.kornhuber.jobsearch.service.JobService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -44,6 +46,14 @@ public class JobController {
             @Valid @RequestBody UpdateJobRequest req
     ) {
         return service.update(id, req);
+    }
+
+    @PatchMapping("/{id}/addressId")
+    public JobResponseDTO updateJobAddressId(
+            @PathVariable Integer id,
+            @RequestBody UpdateJobAddressRequest req  // { "addressId": null oder id }
+    ) {
+        return service.updateJobAddressId(id, req);
     }
 
     @DeleteMapping("/{id}")

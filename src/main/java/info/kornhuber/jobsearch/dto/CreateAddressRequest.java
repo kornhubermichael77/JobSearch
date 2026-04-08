@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 
 public class CreateAddressRequest {
 
+    public Integer jobId;
+
     @Size(max = 100)
     public String street;
 

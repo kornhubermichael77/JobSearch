@@ -5,6 +5,7 @@ import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -70,16 +71,27 @@ public class GlobalExceptionHandler {
         return Map.of("error", "Ungültige Zugangsdaten");
     }
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, Object> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        return Map.of("error", "Ungültiger Parameterwert: " + ex.getName());
-    }
-
     // saubere JSON-Fehler statt HTML-Whitelabel
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, Object> handleGeneric(Exception ex) {
         return Map.of("error", "Interner Fehler");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex
+    ) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "Invalid request parameter");
+        body.put("parameter", ex.getName());
+        body.put("value", ex.getValue());
+
+        if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
+            Object[] constants = ex.getRequiredType().getEnumConstants();
+            body.put("allowedValues", constants);
+        }
+
+        return ResponseEntity.badRequest().body(body);
     }
 }

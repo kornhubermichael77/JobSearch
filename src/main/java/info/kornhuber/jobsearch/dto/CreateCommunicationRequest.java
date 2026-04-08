@@ -32,7 +32,9 @@ public class CreateCommunicationRequest {
     @Size(max = 100, message = "role darf maximal 100 Zeichen haben")
     public String role;
 
+    @Size(max = 10000, message = "content darf maximal 10000 Zeichen haben")
     public String content;
+    @Size(max = 2500, message = "sidemarks darf maximal 2500 Zeichen haben")
     public String sidemarks;
 
     @NotNull
@@ -41,8 +43,11 @@ public class CreateCommunicationRequest {
     // MAIL
     @Size(max = 150, message = "address darf maximal 150 Zeichen haben")
     public String address;
+
     @Size(max = 100, message = "subject darf maximal 100 Zeichen haben")
     public String subject;
+
+    @Size(max = 500, message = "attachments darf maximal 500 Zeichen haben")
     public String attachments;
 
     // PHONE
@@ -70,5 +75,6 @@ public class CreateCommunicationRequest {
     @Size(max = 150, message = "duration darf maximal 150 Zeichen haben")
     public String duration;
 
+    @Size(max = 2500, message = "conclusion darf maximal 2500 Zeichen haben")
     public String conclusion;
 }

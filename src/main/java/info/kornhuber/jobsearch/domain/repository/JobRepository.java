@@ -26,6 +26,11 @@ public interface JobRepository extends JpaRepository<Job, Integer> {
             a.city as city,
             a.street as street,
             a.number as number,
+            a.country as country,
+            a.postcode as postcode,
+            a.headquarter as headquarter,
+            a.distance as distance,
+            a.traveltime as traveltime,
             j.found as found,
             j.source as source,
             j.url as url,
@@ -47,7 +52,7 @@ public interface JobRepository extends JpaRepository<Job, Integer> {
         where (:status is null or j.status = :status)
           and (:companyId is null or c.id = :companyId)
         group by
-            j.id, c.id, c.name, a.id, a.city, a.street, a.number,
+            j.id, c.id, c.name, a.id, a.city, a.street, a.number, a.postcode, a.country, a.headquarter, a.distance, a.traveltime,
             j.found, j.source, j.url, j.text, j.status,
             j.mail, j.mailPerson, j.tel, j.telPerson,
             j.teilzeit, j.gleitzeit, j.homeoffice, j.features

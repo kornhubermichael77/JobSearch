@@ -6,6 +6,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.time.LocalDateTime;
 
@@ -32,6 +34,11 @@ public class Job {
     @Getter
     @Setter
     private Address address;
+
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter
+    @Setter
+    private List<Communication> communications = new ArrayList<>();
 
     @Column(name = "found")
     @Getter
@@ -101,4 +108,13 @@ public class Job {
     @Lob
     private String features;
 
+    public void addCommunication(Communication communication) {
+        communications.add(communication);
+        communication.setJob(this);
+    }
+
+    public void removeCommunication(Communication communication) {
+        communications.remove(communication);
+        communication.setJob(null);
+    }
 }

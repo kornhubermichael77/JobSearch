@@ -69,6 +69,8 @@ public class TimelineMapper {
     }
 
     private void fillBase(TimelineItemDTO dto, Communication c) {
+        dto.jobId = c.getJob() != null ? c.getJob().getId() : null;
+        dto.id = c.getId();
         dto.date = c.getDate();
         dto.person = c.getPerson();
         dto.role = c.getRole();

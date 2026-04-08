@@ -19,6 +19,7 @@ public class UpdateJobRequest {
     @Size(max = 500, message = "url darf maximal 500 Zeichen haben")
     public String url;
 
+    @Size(max = 10000, message = "text darf maximal 10000 Zeichen haben")
     public String text;
 
     @NotNull(message = "status darf nicht leer sein")
@@ -46,5 +47,6 @@ public class UpdateJobRequest {
     @Size(max = 100, message = "homeoffice darf maximal 100 Zeichen haben")
     public String homeoffice;
 
+    @Size(max = 2500, message = "features darf maximal 2500 Zeichen haben")
     public String features;
 }

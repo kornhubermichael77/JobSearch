@@ -7,10 +7,17 @@ public interface JobWithCommunicationCountProjection {
     Integer getId();
     Integer getCompanyId();
     String getCompanyName();
+
     Integer getAddressId();
     String getCity();
     String getStreet();
     String getNumber();
+    String getPostcode();
+    String getCountry();
+    Boolean getHeadquarter();
+    Double getDistance();
+    LocalDateTime getTraveltime();
+
     LocalDateTime getFound();
     String getSource();
     String getUrl();

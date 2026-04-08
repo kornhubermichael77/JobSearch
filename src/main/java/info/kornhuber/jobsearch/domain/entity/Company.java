@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -21,14 +22,14 @@ public class Company {
     // addresses zeigt auf Address.company
     @Getter
     @Setter
-    private List<Address> addresses;
+    private List<Address> addresses = new ArrayList<>();
     // Company company = ...
     //List<Address> companyAddresses = company.getAddresses();
 
-    @OneToMany(mappedBy = "company") // jobs zeigt auf Job.company
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     @Getter
     @Setter
-    private List<Job> jobs;
+    private List<Job> jobs = new ArrayList<>();
 
     @Column(name = "name", length = 100)
     @Getter
@@ -71,4 +72,13 @@ public class Company {
     @Setter
     private String telPerson;
 
+    public void addJob(Job job) {
+        jobs.add(job);
+        job.setCompany(this);
+    }
+
+    public void removeJob(Job job) {
+        jobs.remove(job);
+        job.setCompany(null);
+    }
 }

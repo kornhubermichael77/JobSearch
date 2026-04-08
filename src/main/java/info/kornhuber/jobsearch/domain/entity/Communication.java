@@ -83,7 +83,4 @@ public abstract class Communication {
     @Column(name = "status")
     private CommunicationStatus status;
 
-    public void setJobId(Job job) {
-        this.job = job;
-    }
 }

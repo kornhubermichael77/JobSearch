@@ -24,6 +24,11 @@ public class AddressController {
         return service.createForCompany(companyId, req);
     }
 
+    @PostMapping("/api/addresses")
+    public AddressResponseDTO createForJob(@Valid @RequestBody CreateAddressRequest req) {
+        return service.createForJob(req);
+    }
+
     @GetMapping("/api/addresses/{id}")
     public AddressResponseDTO byId(@PathVariable Integer id) {
         return service.findById(id);

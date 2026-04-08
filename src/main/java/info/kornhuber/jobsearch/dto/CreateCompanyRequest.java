@@ -21,6 +21,7 @@ public class CreateCompanyRequest {
     @Size(max = 100)
     public String telPerson;
 
+    @Size(max = 5000, message = "summary darf maximal 5000 Zeichen haben")
     public String summary;
 
     @Size(max = 500)
