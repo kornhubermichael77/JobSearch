@@ -2,7 +2,7 @@ package info.kornhuber.jobsearch.domain.repository;
 
 import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.domain.repository.projection.JobWithCommunicationCountProjection;
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.enums.JobStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,9 +12,9 @@ import java.util.List;
 
 public interface JobRepository extends JpaRepository<Job, Integer> {
 
-    List<Job> findByStatus(CommunicationStatus status);
+    List<Job> findByStatus(JobStatus status);
     List<Job> findByCompany_Id(Integer companyId);
-    List<Job> findByStatusAndCompany_Id(CommunicationStatus status, Integer companyId);
+    List<Job> findByStatusAndCompany_Id(JobStatus status, Integer companyId);
 
 
     @Query("""
@@ -59,7 +59,7 @@ public interface JobRepository extends JpaRepository<Job, Integer> {
         order by j.found desc
     """)
     List<JobWithCommunicationCountProjection> findAllWithCommunicationCount(
-            @Param("status") CommunicationStatus status,
+            @Param("status") JobStatus status,
             @Param("companyId") Integer companyId
     );
 
@@ -70,7 +70,7 @@ public interface JobRepository extends JpaRepository<Job, Integer> {
     from Job j
     where j.company.id in :companyIds
     group by j.company.id
-""")
+    """)
     List<CompanyJobCountProjection> countJobsByCompanyIds(@Param("companyIds") List<Integer> companyIds);
 
     long countByCompany_Id(Integer companyId);

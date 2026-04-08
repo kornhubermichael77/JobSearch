@@ -2,7 +2,7 @@ package info.kornhuber.jobsearch.dto;
 
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.enums.JobStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL) // verhindern, dass null-Felder im JSON auftauchen
 public class JobResponseDTO {
@@ -27,7 +27,7 @@ public class JobResponseDTO {
     public String source;
     public String url;
     public String text;
-    public CommunicationStatus status;
+    public JobStatus status;
 
     public String mail;
     public String mailPerson;

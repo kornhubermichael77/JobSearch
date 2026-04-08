@@ -1,6 +1,6 @@
 package info.kornhuber.jobsearch.domain.entity;
 
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.enums.JobStatus;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.*;
@@ -62,10 +62,10 @@ public class Job {
     private String text;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 150)
+    @Column(name = "status", length = 50)
     @Getter
     @Setter
-    private CommunicationStatus status;
+    private JobStatus status;
 
     @Column(name = "mail", length = 150)
     @Getter

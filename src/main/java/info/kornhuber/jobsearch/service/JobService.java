@@ -1,13 +1,10 @@
 package info.kornhuber.jobsearch.service;
 
-import info.kornhuber.jobsearch.dto.CreateJobRequest;
-import info.kornhuber.jobsearch.dto.JobResponseDTO;
-import info.kornhuber.jobsearch.dto.UpdateJobAddressRequest;
-import info.kornhuber.jobsearch.dto.UpdateJobRequest;
+import info.kornhuber.jobsearch.dto.*;
 import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
 import info.kornhuber.jobsearch.domain.entity.Job;
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.enums.JobStatus;
 import info.kornhuber.jobsearch.exception.BadRequestException;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
@@ -39,7 +36,7 @@ public class JobService {
         this.jobMapper = jobMapper;
     }
 
-    public List<JobResponseDTO> findAll(CommunicationStatus status, Integer companyId) {
+    public List<JobResponseDTO> findAll(JobStatus status, Integer companyId) {
         return jobRepository.findAllWithCommunicationCount(status, companyId).stream()
                 .map(p -> {
                     JobResponseDTO dto = new JobResponseDTO();
@@ -69,6 +66,21 @@ public class JobService {
                     dto.homeoffice = p.getHomeoffice();
                     dto.features = p.getFeatures();
                     dto.communicationCount = p.getCommunicationCount();
+                    return dto;
+                })
+                .toList();
+    }
+
+    public List<JobsForFilterResponseDTO> findAllForFilter(JobStatus status, Integer companyId) {
+        return jobRepository.findAllWithCommunicationCount(status, companyId).stream()
+                .map(p -> {
+                    JobsForFilterResponseDTO dto = new JobsForFilterResponseDTO();
+                    dto.id = p.getId();
+                    dto.companyId = p.getCompanyId();
+                    dto.companyName = p.getCompanyName();
+                    dto.source = p.getSource();
+                    dto.text = p.getText();
+                    dto.status = p.getStatus();
                     return dto;
                 })
                 .toList();

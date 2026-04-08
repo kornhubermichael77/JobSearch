@@ -1,6 +1,5 @@
 package info.kornhuber.jobsearch.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;

@@ -8,7 +8,7 @@ import info.kornhuber.jobsearch.dto.UpdateJobRequest;
 import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
 import info.kornhuber.jobsearch.domain.entity.Job;
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.enums.JobStatus;
 import info.kornhuber.jobsearch.exception.BadRequestException;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.mapper.JobMapper;
@@ -89,7 +89,7 @@ class JobServiceTest {
         job.setId(100);
         job.setCompany(company1);
         job.setAddress(address1);
-        job.setStatus(CommunicationStatus.OFFEN);
+        job.setStatus(JobStatus.BEWORBEN);
         job.setSource("LinkedIn");
         job.setFound(LocalDateTime.of(2026, 3, 24, 10, 0));
 
@@ -97,7 +97,7 @@ class JobServiceTest {
         jobResponse.id = 100;
         jobResponse.companyId = 1;
         jobResponse.addressId = 10;
-        jobResponse.status = CommunicationStatus.OFFEN;
+        jobResponse.status = JobStatus.BEWORBEN;
         jobResponse.source = "LinkedIn";
         jobResponse.found = LocalDateTime.of(2026, 3, 24, 10, 0);
     }
@@ -106,7 +106,7 @@ class JobServiceTest {
     void create_shouldCreateJobWithExistingCompanyOnly() {
         CreateJobRequest req = new CreateJobRequest();
         req.companyId = 1;
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
         req.source = "LinkedIn";
         req.found = LocalDateTime.of(2026, 3, 24, 10, 0);
 
@@ -131,14 +131,14 @@ class JobServiceTest {
         Job savedJob = captor.getValue();
         assertThat(savedJob.getCompany()).isEqualTo(company1);
         assertThat(savedJob.getAddress()).isNull();
-        assertThat(savedJob.getStatus()).isEqualTo(CommunicationStatus.OFFEN);
+        assertThat(savedJob.getStatus()).isEqualTo(JobStatus.BEWORBEN);
         assertThat(savedJob.getSource()).isEqualTo("LinkedIn");
     }
 
     @Test
     void create_shouldCreateJobWithNewCompany() {
         CreateJobRequest req = new CreateJobRequest();
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
         req.source = "LinkedIn";
 
         req.newCompany = new CreateCompanyRequest();
@@ -174,7 +174,7 @@ class JobServiceTest {
         CreateJobRequest req = new CreateJobRequest();
         req.companyId = 1;
         req.addressId = 10;
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
         when(addressRepository.findById(10)).thenReturn(Optional.of(address1));
@@ -196,7 +196,7 @@ class JobServiceTest {
         CreateJobRequest req = new CreateJobRequest();
         req.companyId = 1;
         req.addressId = 20;
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
         when(addressRepository.findById(20)).thenReturn(Optional.of(address2));
@@ -214,7 +214,7 @@ class JobServiceTest {
         req.companyId = 1;
         req.newCompany = new CreateCompanyRequest();
         req.newCompany.name = "Neue Firma";
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         assertThatThrownBy(() -> jobService.create(req))
                 .isInstanceOf(BadRequestException.class)
@@ -226,7 +226,7 @@ class JobServiceTest {
     @Test
     void create_shouldThrowWhenNeitherCompanyIdNorNewCompanyIsSet() {
         CreateJobRequest req = new CreateJobRequest();
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         assertThatThrownBy(() -> jobService.create(req))
                 .isInstanceOf(BadRequestException.class)
@@ -242,7 +242,7 @@ class JobServiceTest {
         req.addressId = 10;
         req.newAddress = new CreateAddressRequest();
         req.newAddress.city = "Wien";
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
 
@@ -257,7 +257,7 @@ class JobServiceTest {
     void create_shouldCreateJobWithNewAddressForResolvedCompany() {
         CreateJobRequest req = new CreateJobRequest();
         req.companyId = 1;
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         req.newAddress = new CreateAddressRequest();
         req.newAddress.street = "Neue Straße";
@@ -290,7 +290,7 @@ class JobServiceTest {
     @Test
     void update_shouldKeepExistingCompanyAndAddressWhenIdsAreNotProvided() {
         UpdateJobRequest req = new UpdateJobRequest();
-        req.status = CommunicationStatus.INFORMATION_ERHALTEN;
+        req.status = JobStatus.BEWORBEN;
         req.source = "Xing";
 
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
@@ -301,7 +301,7 @@ class JobServiceTest {
 
         assertThat(job.getCompany()).isEqualTo(company1);
         assertThat(job.getAddress()).isEqualTo(address1);
-        assertThat(job.getStatus()).isEqualTo(CommunicationStatus.INFORMATION_ERHALTEN);
+        assertThat(job.getStatus()).isEqualTo(JobStatus.BEWORBEN);
         assertThat(job.getSource()).isEqualTo("Xing");
     }
 
@@ -310,7 +310,7 @@ class JobServiceTest {
         UpdateJobRequest req = new UpdateJobRequest();
         req.companyId = 2;
         req.addressId = 20;
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
         when(companyRepository.findById(2)).thenReturn(Optional.of(company2));
@@ -329,7 +329,7 @@ class JobServiceTest {
         UpdateJobRequest req = new UpdateJobRequest();
         req.companyId = 1;
         req.addressId = 20;
-        req.status = CommunicationStatus.OFFEN;
+        req.status = JobStatus.BEWORBEN;
 
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
         when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
@@ -368,7 +368,7 @@ class JobServiceTest {
         when(projection.getSource()).thenReturn("LinkedIn");
         when(projection.getUrl()).thenReturn(null);
         when(projection.getText()).thenReturn(null);
-        when(projection.getStatus()).thenReturn(CommunicationStatus.OFFEN);
+        when(projection.getStatus()).thenReturn(JobStatus.BEWORBEN);
         when(projection.getMail()).thenReturn(null);
         when(projection.getMailPerson()).thenReturn(null);
         when(projection.getTel()).thenReturn(null);
@@ -387,7 +387,7 @@ class JobServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id).isEqualTo(100);
         assertThat(result.getFirst().companyId).isEqualTo(3);
-        assertThat(result.getFirst().status).isEqualTo(CommunicationStatus.OFFEN);
+        assertThat(result.getFirst().status).isEqualTo(JobStatus.BEWORBEN);
         assertThat(result.getFirst().communicationCount).isEqualTo(2L);
 
         verify(jobRepository).findAllWithCommunicationCount(null, 3);
@@ -408,7 +408,7 @@ class JobServiceTest {
         when(projection.getSource()).thenReturn("LinkedIn");
         when(projection.getUrl()).thenReturn(null);
         when(projection.getText()).thenReturn(null);
-        when(projection.getStatus()).thenReturn(CommunicationStatus.OFFEN);
+        when(projection.getStatus()).thenReturn(JobStatus.BEWORBEN);
         when(projection.getMail()).thenReturn(null);
         when(projection.getMailPerson()).thenReturn(null);
         when(projection.getTel()).thenReturn(null);
@@ -419,18 +419,18 @@ class JobServiceTest {
         when(projection.getFeatures()).thenReturn(null);
         when(projection.getCommunicationCount()).thenReturn(3L);
 
-        when(jobRepository.findAllWithCommunicationCount(CommunicationStatus.OFFEN, 3))
+        when(jobRepository.findAllWithCommunicationCount(JobStatus.BEWORBEN, 3))
                 .thenReturn(List.of(projection));
 
-        List<JobResponseDTO> result = jobService.findAll(CommunicationStatus.OFFEN, 3);
+        List<JobResponseDTO> result = jobService.findAll(JobStatus.BEWORBEN, 3);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id).isEqualTo(100);
         assertThat(result.getFirst().companyId).isEqualTo(3);
-        assertThat(result.getFirst().status).isEqualTo(CommunicationStatus.OFFEN);
+        assertThat(result.getFirst().status).isEqualTo(JobStatus.BEWORBEN);
         assertThat(result.getFirst().communicationCount).isEqualTo(3L);
 
-        verify(jobRepository).findAllWithCommunicationCount(CommunicationStatus.OFFEN, 3);
+        verify(jobRepository).findAllWithCommunicationCount(JobStatus.BEWORBEN, 3);
     }
 
 

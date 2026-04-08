@@ -1,7 +1,6 @@
 package info.kornhuber.jobsearch.dto;
 
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
-import jakarta.validation.constraints.Email;
+import info.kornhuber.jobsearch.enums.JobStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -23,7 +22,7 @@ public class UpdateJobRequest {
     public String text;
 
     @NotNull(message = "status darf nicht leer sein")
-    public CommunicationStatus status;
+    public JobStatus status;
 
     //@Email(message = "mail muss eine gültige E-Mail-Adresse sein")
     @Size(max = 150, message = "mail darf maximal 150 Zeichen haben")

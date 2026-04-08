@@ -1,7 +1,7 @@
 package info.kornhuber.jobsearch.domain.repository.projection;
 
 import java.time.LocalDateTime;
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.enums.JobStatus;
 
 public interface JobWithCommunicationCountProjection {
     Integer getId();
@@ -22,7 +22,7 @@ public interface JobWithCommunicationCountProjection {
     String getSource();
     String getUrl();
     String getText();
-    CommunicationStatus getStatus();
+    JobStatus getStatus();
     String getMail();
     String getMailPerson();
     String getTel();

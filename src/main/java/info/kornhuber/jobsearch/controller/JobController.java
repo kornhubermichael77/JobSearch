@@ -1,10 +1,7 @@
 package info.kornhuber.jobsearch.controller;
 
-import info.kornhuber.jobsearch.dto.CreateJobRequest;
-import info.kornhuber.jobsearch.dto.JobResponseDTO;
-import info.kornhuber.jobsearch.dto.UpdateJobAddressRequest;
-import info.kornhuber.jobsearch.dto.UpdateJobRequest;
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.dto.*;
+import info.kornhuber.jobsearch.enums.JobStatus;
 import info.kornhuber.jobsearch.service.JobService;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,10 +21,18 @@ public class JobController {
 
     @GetMapping
     public List<JobResponseDTO> all(
-            @RequestParam(required = false) CommunicationStatus status,
+            @RequestParam(required = false) JobStatus status,
             @RequestParam(required = false) Integer companyId
     ) {
         return service.findAll(status, companyId);
+    }
+
+    @GetMapping("/for-filter")
+    public List<JobsForFilterResponseDTO> allForFilter(
+            @RequestParam(required = false) JobStatus status,
+            @RequestParam(required = false) Integer companyId
+    ) {
+        return service.findAllForFilter(status, companyId);
     }
 
     @GetMapping("/{id}")

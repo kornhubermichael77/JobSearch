@@ -1,0 +1,17 @@
+package info.kornhuber.jobsearch.enums;
+
+public enum JobStatus {
+    NEU,
+    INFORMATIONEN_EINHOLEN,
+    EV_BEWERBEN,
+    UNBEDINGT_BEWERBEN,
+    BEWORBEN,
+    ERNEUT_BEWORBEN,
+    NACHGEFRAGT,
+    TERMIN_JOBINTERVIEW,
+    TERMIN_ERPROBUNG,
+    ZUSAGE,
+    ABSAGE,
+    WERDE_IN_REFERENZ_GEHALTEN,
+    SONSTIGES
+}

@@ -3,7 +3,7 @@ package info.kornhuber.jobsearch.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import info.kornhuber.jobsearch.config.GlobalExceptionHandler;
 import info.kornhuber.jobsearch.dto.JobResponseDTO;
-import info.kornhuber.jobsearch.enums.CommunicationStatus;
+import info.kornhuber.jobsearch.enums.JobStatus;
 import info.kornhuber.jobsearch.service.JobService;
 import info.kornhuber.jobsearch.exception.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +48,7 @@ class JobControllerTest {
         JobResponseDTO response = new JobResponseDTO();
         response.id = 100;
         response.companyId = 1;
-        response.status = CommunicationStatus.OFFEN;
+        response.status = JobStatus.BEWORBEN;
         response.source = "LinkedIn";
         response.found = LocalDateTime.of(2026, 3, 24, 10, 0);
 
@@ -57,7 +57,7 @@ class JobControllerTest {
         String json = """
                 {
                   "companyId": 1,
-                  "status": "OFFEN",
+                  "status": "BEWORBEN",
                   "source": "LinkedIn",
                   "found": "2026-03-24T10:00:00"
                 }
@@ -69,7 +69,7 @@ class JobControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(100))
                 .andExpect(jsonPath("$.companyId").value(1))
-                .andExpect(jsonPath("$.status").value("OFFEN"))
+                .andExpect(jsonPath("$.status").value("BEWORBEN"))
                 .andExpect(jsonPath("$.source").value("LinkedIn"));
     }
 
@@ -78,13 +78,13 @@ class JobControllerTest {
         JobResponseDTO response = new JobResponseDTO();
         response.id = 101;
         response.companyId = 2;
-        response.status = CommunicationStatus.OFFEN;
+        response.status = JobStatus.BEWORBEN;
 
         when(jobService.create(any())).thenReturn(response);
 
         String json = """
                 {
-                  "status": "OFFEN",
+                  "status": "BEWORBEN",
                   "newCompany": {
                     "name": "Neue Firma",
                     "mail": "hr@neu.example",
@@ -99,7 +99,7 @@ class JobControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(101))
                 .andExpect(jsonPath("$.companyId").value(2))
-                .andExpect(jsonPath("$.status").value("OFFEN"));
+                .andExpect(jsonPath("$.status").value("BEWORBEN"));
     }
 
     @Test
@@ -124,7 +124,7 @@ class JobControllerTest {
 
         String json = """
                 {
-                  "status": "OFFEN"
+                  "status": "BEWORBEN"
                 }
                 """;
 
@@ -141,7 +141,7 @@ class JobControllerTest {
         response.id = 100;
         response.companyId = 2;
         response.addressId = 20;
-        response.status = CommunicationStatus.INFORMATION_ERHALTEN;
+        response.status = JobStatus.BEWORBEN;
 
         when(jobService.update(eq(100), any())).thenReturn(response);
 
@@ -149,7 +149,7 @@ class JobControllerTest {
                 {
                   "companyId": 2,
                   "addressId": 20,
-                  "status": "INFORMATION_ERHALTEN",
+                  "status": "BEWORBEN",
                   "source": "Xing"
                 }
                 """;
@@ -161,7 +161,7 @@ class JobControllerTest {
                 .andExpect(jsonPath("$.id").value(100))
                 .andExpect(jsonPath("$.companyId").value(2))
                 .andExpect(jsonPath("$.addressId").value(20))
-                .andExpect(jsonPath("$.status").value("INFORMATION_ERHALTEN"));
+                .andExpect(jsonPath("$.status").value("BEWORBEN"));
     }
 
     @Test
@@ -170,7 +170,7 @@ class JobControllerTest {
         response.id = 100;
         response.companyId = 1;
         response.addressId = 10;
-        response.status = CommunicationStatus.OFFEN;
+        response.status = JobStatus.BEWORBEN;
 
         when(jobService.findById(100)).thenReturn(response);
 
@@ -185,15 +185,15 @@ class JobControllerTest {
     void all_shouldReturnFilteredJobs() throws Exception {
         JobResponseDTO response = new JobResponseDTO();
         response.id = 100;
-        response.status = CommunicationStatus.OFFEN;
+        response.status = JobStatus.BEWORBEN;
 
-        when(jobService.findAll(CommunicationStatus.OFFEN, null)).thenReturn(List.of(response));
+        when(jobService.findAll(JobStatus.BEWORBEN, null)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/jobs")
-                        .param("status", "OFFEN"))
+                        .param("status", "BEWORBEN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(100))
-                .andExpect(jsonPath("$[0].status").value("OFFEN"));
+                .andExpect(jsonPath("$[0].status").value("BEWORBEN"));
     }
 
     @Test
@@ -211,7 +211,7 @@ class JobControllerTest {
         JobResponseDTO response = new JobResponseDTO();
         response.id = 100;
         response.companyId = 3;
-        response.status = CommunicationStatus.OFFEN;
+        response.status = JobStatus.BEWORBEN;
 
         when(jobService.findAll(null, 3)).thenReturn(List.of(response));
 
@@ -227,15 +227,15 @@ class JobControllerTest {
         JobResponseDTO response = new JobResponseDTO();
         response.id = 100;
         response.companyId = 3;
-        response.status = CommunicationStatus.OFFEN;
+        response.status = JobStatus.BEWORBEN;
 
-        when(jobService.findAll(CommunicationStatus.OFFEN, 3)).thenReturn(List.of(response));
+        when(jobService.findAll(JobStatus.BEWORBEN, 3)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/jobs")
-                        .param("status", "OFFEN")
+                        .param("status", "BEWORBEN")
                         .param("companyId", "3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].status").value("OFFEN"))
+                .andExpect(jsonPath("$[0].status").value("BEWORBEN"))
                 .andExpect(jsonPath("$[0].companyId").value(3));
     }
 }
