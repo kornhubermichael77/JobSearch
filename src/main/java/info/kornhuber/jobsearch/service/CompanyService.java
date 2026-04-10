@@ -34,7 +34,7 @@ public class CompanyService {
     }
 
     @Transactional(readOnly = true)
-    public CompanyResponseDTO findById(Integer id) {
+    public CompanyResponseDTO getById(Integer id) {
         Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Company not found: " + id));
 
@@ -44,7 +44,7 @@ public class CompanyService {
     }
 
     @Transactional(readOnly = true)
-    public List<CompanyResponseDTO> findAll() {
+    public List<CompanyResponseDTO> getAll() {
         List<Company> companies = companyRepository.findAll();
 
         if (companies.isEmpty()) {

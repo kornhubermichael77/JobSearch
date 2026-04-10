@@ -24,6 +24,11 @@ public class Address {
     @Setter
     private Company company;
 
+    @Column(name = "owner_user_id")
+    @Getter
+    @Setter
+    private Long ownerUserId;
+
     // Eine Adresse kann bei mehreren Jobs vorkommen
     @OneToMany(mappedBy = "address")
     @Getter

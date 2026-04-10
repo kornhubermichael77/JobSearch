@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/communication-status")
+@RequestMapping("/api/communication-status-options")
 // übergibt dem Frontend die erlaubten ENUM-Werte für den Kommunikationsstatus
 public class CommunicationStatusController {
     @GetMapping

@@ -343,18 +343,18 @@ class JobServiceTest {
     }
 
     @Test
-    void findById_shouldReturnMappedDto() {
+    void getById_shouldReturnMappedDto() {
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
         when(jobMapper.toDto(job)).thenReturn(jobResponse);
 
-        JobResponseDTO result = jobService.findById(100);
+        JobResponseDTO result = jobService.getById(100);
 
         assertThat(result).isNotNull();
         assertThat(result.id).isEqualTo(100);
     }
 
     @Test
-    void findAll_shouldFilterByCompanyId() {
+    void getAll_shouldFilterByCompanyId() {
         JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
 
         when(projection.getId()).thenReturn(100);
@@ -382,7 +382,7 @@ class JobServiceTest {
         when(jobRepository.findAllWithCommunicationCount(null, 3))
                 .thenReturn(List.of(projection));
 
-        List<JobResponseDTO> result = jobService.findAll(null, 3);
+        List<JobResponseDTO> result = jobService.getAll(null, 3);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id).isEqualTo(100);
@@ -394,7 +394,7 @@ class JobServiceTest {
     }
 
     @Test
-    void findAll_shouldFilterByStatusAndCompanyId() {
+    void getAll_shouldFilterByStatusAndCompanyId() {
         JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
 
         when(projection.getId()).thenReturn(100);
@@ -422,7 +422,7 @@ class JobServiceTest {
         when(jobRepository.findAllWithCommunicationCount(JobStatus.BEWORBEN, 3))
                 .thenReturn(List.of(projection));
 
-        List<JobResponseDTO> result = jobService.findAll(JobStatus.BEWORBEN, 3);
+        List<JobResponseDTO> result = jobService.getAll(JobStatus.BEWORBEN, 3);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id).isEqualTo(100);

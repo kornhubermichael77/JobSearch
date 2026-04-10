@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 public class RegisterRequest {
 
     @NotBlank(message = "username darf nicht leer sein")
-    @Size(max = 255)
+    @Size(min = 1, max = 255, message = "username muss zwischen 1 und 255 Zeichen lang sein")
     public String username;
 
     @NotBlank(message = "password darf nicht leer sein")
@@ -16,7 +16,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "email darf nicht leer sein")
     @Email(message = "email muss gültig sein")
-    @Size(max = 255)
+    @Size(max = 255, message = "email darf maximal 255 Zeichen haben")
     public String email;
 
 }

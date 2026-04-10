@@ -172,7 +172,7 @@ class JobControllerTest {
         response.addressId = 10;
         response.status = JobStatus.BEWORBEN;
 
-        when(jobService.findById(100)).thenReturn(response);
+        when(jobService.getById(100)).thenReturn(response);
 
         mockMvc.perform(get("/api/jobs/100"))
                 .andExpect(status().isOk())
@@ -187,7 +187,7 @@ class JobControllerTest {
         response.id = 100;
         response.status = JobStatus.BEWORBEN;
 
-        when(jobService.findAll(JobStatus.BEWORBEN, null)).thenReturn(List.of(response));
+        when(jobService.getAll(JobStatus.BEWORBEN, null)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/jobs")
                         .param("status", "BEWORBEN"))
@@ -213,7 +213,7 @@ class JobControllerTest {
         response.companyId = 3;
         response.status = JobStatus.BEWORBEN;
 
-        when(jobService.findAll(null, 3)).thenReturn(List.of(response));
+        when(jobService.getAll(null, 3)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/jobs")
                         .param("companyId", "3"))
@@ -229,7 +229,7 @@ class JobControllerTest {
         response.companyId = 3;
         response.status = JobStatus.BEWORBEN;
 
-        when(jobService.findAll(JobStatus.BEWORBEN, 3)).thenReturn(List.of(response));
+        when(jobService.getAll(JobStatus.BEWORBEN, 3)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/jobs")
                         .param("status", "BEWORBEN")

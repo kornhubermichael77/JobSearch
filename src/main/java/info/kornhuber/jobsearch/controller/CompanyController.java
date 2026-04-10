@@ -5,6 +5,7 @@ import info.kornhuber.jobsearch.dto.CreateCompanyRequest;
 import info.kornhuber.jobsearch.dto.UpdateCompanyRequest;
 import info.kornhuber.jobsearch.service.CompanyService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,15 +22,16 @@ public class CompanyController {
 
     @GetMapping
     public List<CompanyResponseDTO> all() {
-        return service.findAll();
+        return service.getAll();
     }
 
     @GetMapping("/{id}")
-    public CompanyResponseDTO byId(@PathVariable Integer id) {
-        return service.findById(id);
+    public CompanyResponseDTO getById(@PathVariable Integer id) {
+        return service.getById(id);
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public CompanyResponseDTO create(@Valid @RequestBody CreateCompanyRequest req) {
         return service.create(req);
     }
@@ -43,6 +45,7 @@ public class CompanyController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Integer id) {
         service.delete(id);
     }

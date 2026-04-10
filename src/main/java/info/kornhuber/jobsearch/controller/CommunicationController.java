@@ -5,6 +5,7 @@ import info.kornhuber.jobsearch.dto.CommunicationResponseDTO;
 import info.kornhuber.jobsearch.dto.CreateCommunicationRequest;
 import info.kornhuber.jobsearch.service.CommunicationService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,11 +19,12 @@ public class CommunicationController {
     }
 
     @GetMapping("/{id}")
-    public CommunicationResponseDTO byId(@PathVariable Integer id) {
-        return service.findById(id);
+    public CommunicationResponseDTO getById(@PathVariable Integer id) {
+        return service.getById(id);
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public CommunicationResponseDTO create(@Valid @RequestBody CreateCommunicationRequest req) {
         return service.create(req);
     }
@@ -36,6 +38,7 @@ public class CommunicationController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Integer id) {
         service.delete(id);
     }

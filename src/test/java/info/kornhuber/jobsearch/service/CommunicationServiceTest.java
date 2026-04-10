@@ -182,11 +182,11 @@ class CommunicationServiceTest {
     }
 
     @Test
-    void findById_shouldReturnMappedDto() {
+    void getById_shouldReturnMappedDto() {
         when(communicationRepository.findById(100)).thenReturn(Optional.of(phoneCommunication));
         when(communicationMapper.toDto(phoneCommunication)).thenReturn(phoneResponseDto);
 
-        CommunicationResponseDTO result = communicationService.findById(100);
+        CommunicationResponseDTO result = communicationService.getById(100);
 
         assertThat(result).isNotNull();
         assertThat(result.id).isEqualTo(100);

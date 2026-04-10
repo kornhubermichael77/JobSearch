@@ -1,9 +1,12 @@
 package info.kornhuber.jobsearch.mapper;
 
-import info.kornhuber.jobsearch.dto.AddressResponseDTO;
 import info.kornhuber.jobsearch.domain.entity.Address;
+import info.kornhuber.jobsearch.dto.AddressResponseDTO;
 import org.springframework.stereotype.Component;
 
+/**
+ * Wandelt Address-Entities in Response-DTOs um.
+ */
 @Component
 public class AddressMapper {
 
@@ -19,6 +22,10 @@ public class AddressMapper {
         dto.distance = address.getDistance();
         dto.traveltime = address.getTraveltime();
 
+        // Technischer Besitzer der Adresse (aktueller User / Owner)
+        dto.ownerUserId = address.getOwnerUserId();
+
+        // Optionale Company-Zuordnung
         if (address.getCompany() != null) {
             dto.companyId = address.getCompany().getId();
         }

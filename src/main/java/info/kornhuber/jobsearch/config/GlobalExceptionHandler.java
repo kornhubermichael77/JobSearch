@@ -1,97 +1,253 @@
 package info.kornhuber.jobsearch.config;
 
+import info.kornhuber.jobsearch.dto.error.ApiErrorResponse;
+import info.kornhuber.jobsearch.dto.error.ApiFieldError;
 import info.kornhuber.jobsearch.exception.BadRequestException;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.HashMap;
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, Object> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    public ResponseEntity<ApiErrorResponse> handleValidationErrors(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request
+    ) {
+        List<ApiFieldError> fieldErrors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(this::toApiFieldError)
+                .toList();
 
-        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-            errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-        }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("errors", errors);
-        return response;
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Validation Error",
+                "Request validation failed",
+                request.getRequestURI(),
+                fieldErrors
+        );
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, Object> handleJsonParseError(HttpMessageNotReadableException ex) {
-        return Map.of("error", "Ungültiger Enum-Wert im Request");
+    public ResponseEntity<ApiErrorResponse> handleJsonParseError(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                "Malformed JSON or invalid enum value in request body",
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, Object> handleConstraintViolation(ConstraintViolationException ex) {
-        return Map.of("error", ex.getMessage());
+    public ResponseEntity<ApiErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex,
+            HttpServletRequest request
+    ) {
+        List<ApiFieldError> fieldErrors = ex.getConstraintViolations()
+                .stream()
+                .map(this::toApiFieldError)
+                .toList();
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Validation Error",
+                "Request constraint validation failed",
+                request.getRequestURI(),
+                fieldErrors
+        );
     }
 
     @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, Object> handleNotFound(NotFoundException ex) {
-        return Map.of("error", ex.getMessage());
+    public ResponseEntity<ApiErrorResponse> handleNotFound(
+            NotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(BadRequestException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, Object> handleBadRequest(BadRequestException ex) {
-        return Map.of("error", ex.getMessage());
+    public ResponseEntity<ApiErrorResponse> handleBadRequest(
+            BadRequestException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(ConflictException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, Object> handleConflict(ConflictException ex) {
-        return Map.of("error", ex.getMessage());
+    public ResponseEntity<ApiErrorResponse> handleConflict(
+            ConflictException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public Map<String, Object> handleBadCredentials(BadCredentialsException ex) {
-        return Map.of("error", "Ungültige Zugangsdaten");
-    }
-
-    // saubere JSON-Fehler statt HTML-Whitelabel
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, Object> handleGeneric(Exception ex) {
-        return Map.of("error", "Interner Fehler");
+    public ResponseEntity<ApiErrorResponse> handleBadCredentials(
+            BadCredentialsException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized",
+                "Ungültige Zugangsdaten",
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Map<String, Object>> handleTypeMismatch(
-            MethodArgumentTypeMismatchException ex
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request
     ) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("error", "Invalid request parameter");
-        body.put("parameter", ex.getName());
-        body.put("value", ex.getValue());
+        String message = "Invalid request parameter: " + ex.getName();
 
-        if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
-            Object[] constants = ex.getRequiredType().getEnumConstants();
-            body.put("allowedValues", constants);
+        ApiFieldError fieldError = new ApiFieldError(
+                ex.getName(),
+                message,
+                ex.getValue(),
+                ex.getRequiredType() != null && ex.getRequiredType().isEnum()
+                        ? Map.of("allowedValues", ex.getRequiredType().getEnumConstants())
+                        : Map.of()
+        );
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                "Request parameter validation failed",
+                request.getRequestURI(),
+                List.of(fieldError)
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleGeneric(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        log.error("Unhandled exception for path {}", request.getRequestURI(), ex);
+
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                "Interner Fehler",
+                request.getRequestURI()
+        );
+    }
+
+    private ApiFieldError toApiFieldError(FieldError error) {
+        return new ApiFieldError(
+                error.getField(),
+                error.getDefaultMessage(),
+                error.getRejectedValue(),
+                extractFieldConstraints(error)
+        );
+    }
+
+    private ApiFieldError toApiFieldError(ConstraintViolation<?> violation) {
+        String field = violation.getPropertyPath() != null
+                ? violation.getPropertyPath().toString()
+                : "unknown";
+
+        return new ApiFieldError(
+                field,
+                violation.getMessage(),
+                violation.getInvalidValue(),
+                violation.getConstraintDescriptor().getAttributes().entrySet().stream()
+                        .filter(entry -> !List.of("message", "groups", "payload").contains(entry.getKey()))
+                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+        );
+    }
+
+    private Map<String, Object> extractFieldConstraints(FieldError error) {
+        Object[] arguments = error.getArguments();
+        if (arguments == null) {
+            return Map.of();
         }
 
-        return ResponseEntity.badRequest().body(body);
+        if ("Size".equals(error.getCode()) && arguments.length >= 3) {
+            Object min = arguments[2];
+            Object max = arguments[1];
+            return Map.of(
+                    "min", min,
+                    "max", max
+            );
+        }
+
+        if ("NotBlank".equals(error.getCode()) || "NotNull".equals(error.getCode())) {
+            return Map.of("required", true);
+        }
+
+        if ("Email".equals(error.getCode())) {
+            return Map.of("format", "email");
+        }
+
+        return Map.of();
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(
+            HttpStatus status,
+            String error,
+            String message,
+            String path
+    ) {
+        return buildResponse(status, error, message, path, List.of());
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(
+            HttpStatus status,
+            String error,
+            String message,
+            String path,
+            List<ApiFieldError> fieldErrors
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                error,
+                message,
+                path,
+                fieldErrors
+        );
+
+        return ResponseEntity.status(status).body(response);
     }
 }

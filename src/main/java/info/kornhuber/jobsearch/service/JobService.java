@@ -36,7 +36,7 @@ public class JobService {
         this.jobMapper = jobMapper;
     }
 
-    public List<JobResponseDTO> findAll(JobStatus status, Integer companyId) {
+    public List<JobResponseDTO> getAll(JobStatus status, Integer companyId) {
         return jobRepository.findAllWithCommunicationCount(status, companyId).stream()
                 .map(p -> {
                     JobResponseDTO dto = new JobResponseDTO();
@@ -71,7 +71,7 @@ public class JobService {
                 .toList();
     }
 
-    public List<JobsForFilterResponseDTO> findAllForFilter(JobStatus status, Integer companyId) {
+    public List<JobsForFilterResponseDTO> getAllForFilter(JobStatus status, Integer companyId) {
         return jobRepository.findAllWithCommunicationCount(status, companyId).stream()
                 .map(p -> {
                     JobsForFilterResponseDTO dto = new JobsForFilterResponseDTO();
@@ -86,7 +86,7 @@ public class JobService {
                 .toList();
     }
 
-    public JobResponseDTO findById(Integer id) {
+    public JobResponseDTO getById(Integer id) {
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Job not found: " + id));
 
@@ -110,7 +110,7 @@ public class JobService {
         return jobMapper.toDto(saved);
     }
 
-    public JobResponseDTO updateJobAddressId(Integer id, UpdateJobAddressRequest req) {
+    public JobResponseDTO updateJobAddress(Integer id, UpdateJobAddressRequest req) {
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Job not found: " + id));
 

@@ -36,7 +36,7 @@ class CommunicationControllerTest {
     }
 
     @Test
-    void byId_shouldReturnCommunication() throws Exception {
+    void getById_shouldReturnCommunication() throws Exception {
         CommunicationResponseDTO response = new CommunicationResponseDTO();
         response.id = 100;
         response.type = CommunicationType.PHONE;
@@ -46,7 +46,7 @@ class CommunicationControllerTest {
         response.number = "+43 660 1234567";
         response.direction = CommunicationDirection.OUT;
 
-        when(communicationService.findById(100)).thenReturn(response);
+        when(communicationService.getById(100)).thenReturn(response);
 
         mockMvc.perform(get("/api/communications/100"))
                 .andExpect(status().isOk())

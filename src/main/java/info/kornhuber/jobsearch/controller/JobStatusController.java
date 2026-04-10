@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/job-status")
+@RequestMapping("/api/job-status-options")
 public class JobStatusController {
 
         @GetMapping

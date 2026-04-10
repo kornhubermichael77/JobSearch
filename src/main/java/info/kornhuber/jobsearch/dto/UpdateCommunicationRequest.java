@@ -28,6 +28,7 @@ public class UpdateCommunicationRequest {
 
     @Size(max = 10000, message = "content darf maximal 10000 Zeichen haben")
     public String content;
+
     @Size(max = 2500, message = "sidemarks darf maximal 2500 Zeichen haben")
     public String sidemarks;
 

@@ -22,8 +22,10 @@ CREATE TABLE address (
                          street VARCHAR(100) DEFAULT NULL,
                          traveltime DATETIME(6) DEFAULT NULL,
                          c_id_fk INT DEFAULT NULL,
+                         owner_user_id BIGINT DEFAULT NULL,
                          PRIMARY KEY (id_pk),
                          KEY idx_address_company (c_id_fk),
+                         KEY idx_address_owner_user (owner_user_id),
                          CONSTRAINT fk_address_company
                              FOREIGN KEY (c_id_fk) REFERENCES company (id_pk)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

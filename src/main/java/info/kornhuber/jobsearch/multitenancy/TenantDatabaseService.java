@@ -1,17 +1,23 @@
 package info.kornhuber.jobsearch.multitenancy;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 
+/**
+ * Verantwortlich für das technische Provisionieren von Tenant-Datenbanken.
+ *
+ * Diese Klasse:
+ * - legt neue Tenant-Datenbanken an
+ * - löscht Tenant-Datenbanken
+ * - stößt nach dem Erstellen oder bei Bedarf auch für bestehende DBs die Schema-Migration an
+ *
+ * Wichtig:
+ * Das eigentliche Schema wird ausschließlich über Flyway-Migrationen verwaltet.
+ */
 @Service
 public class TenantDatabaseService {
 
@@ -27,33 +33,49 @@ public class TenantDatabaseService {
     @Value("${app.datasource.tenant.driver-class-name}")
     private String driverClassName;
 
+    private final TenantMigrationService tenantMigrationService;
+
+    public TenantDatabaseService(TenantMigrationService tenantMigrationService) {
+        this.tenantMigrationService = tenantMigrationService;
+    }
+
+    /**
+     * Erstellt eine Tenant-Datenbank, falls sie noch nicht existiert,
+     * und migriert sie anschließend auf den aktuellen Schema-Stand.
+     *
+     * Diese Methode ist für NEUE Tenants gedacht.
+     *
+     * @param dbName technischer Name der Tenant-Datenbank
+     */
     public void createTenantDatabase(String dbName) {
         createDatabaseIfNotExists(dbName);
-        initializeSchemaIfNeeded(dbName);
-    }
 
-    public void initializeSchemaIfNeeded(String dbName) {
         DataSource tenantDataSource = buildTenantDataSource(dbName);
 
-        try (Connection connection = tenantDataSource.getConnection()) {
-            if (tableExists(connection, "company")) {
-                return;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Konnte Tabellenstatus für Tenant-DB nicht prüfen: " + dbName, e);
-        }
-
-        try {
-            ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-            populator.addScript(new ClassPathResource("schema-tenant.sql"));
-            populator.setContinueOnError(false);
-            populator.setIgnoreFailedDrops(true);
-            populator.execute(tenantDataSource);
-        } catch (Exception e) {
-            throw new RuntimeException("Konnte Tenant-Schema nicht initialisieren: " + dbName, e);
-        }
+        tenantMigrationService.migrateTenantDatabase(tenantDataSource);
     }
 
+    /**
+     * Migriert eine bereits existierende Tenant-Datenbank auf den aktuellen Schema-Stand.
+     *
+     * Diese Methode ist wichtig für bestehende Tenants, deren Datenbank bereits existiert,
+     * aber möglicherweise noch nicht auf dem neuesten Flyway-Stand ist.
+     *
+     * Es wird bewusst KEINE Datenbank neu erzeugt.
+     *
+     * @param dbName technischer Name der bestehenden Tenant-Datenbank
+     */
+    public void migrateExistingTenantDatabase(String dbName) {
+        DataSource tenantDataSource = buildTenantDataSource(dbName);
+
+        tenantMigrationService.migrateTenantDatabase(tenantDataSource);
+    }
+
+    /**
+     * Löscht eine Tenant-Datenbank vollständig.
+     *
+     * @param dbName Name der zu löschenden Tenant-Datenbank
+     */
     public void dropTenantDatabase(String dbName) {
         DataSource adminDataSource = buildAdminDataSource();
         JdbcTemplate jdbcTemplate = new JdbcTemplate(adminDataSource);
@@ -65,6 +87,11 @@ public class TenantDatabaseService {
         }
     }
 
+    /**
+     * Legt die Datenbank technisch an, falls sie noch nicht existiert.
+     *
+     * @param dbName Name der Tenant-Datenbank
+     */
     private void createDatabaseIfNotExists(String dbName) {
         DataSource adminDataSource = buildAdminDataSource();
         JdbcTemplate jdbcTemplate = new JdbcTemplate(adminDataSource);
@@ -83,19 +110,10 @@ public class TenantDatabaseService {
         }
     }
 
-    private boolean tableExists(Connection connection, String tableName) {
-        try {
-            DatabaseMetaData metaData = connection.getMetaData();
-            String catalog = connection.getCatalog();
-
-            try (ResultSet rs = metaData.getTables(catalog, null, tableName, new String[]{"TABLE"})) {
-                return rs.next();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Konnte nicht prüfen, ob Tabelle existiert: " + tableName, e);
-        }
-    }
-
+    /**
+     * Baut eine DataSource auf Server-/Admin-Ebene.
+     * Diese wird benötigt, um CREATE DATABASE / DROP DATABASE auszuführen.
+     */
     private DataSource buildAdminDataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(driverClassName);
@@ -105,6 +123,11 @@ public class TenantDatabaseService {
         return dataSource;
     }
 
+    /**
+     * Baut eine DataSource für eine konkrete Tenant-Datenbank.
+     *
+     * @param dbName Name der Tenant-Datenbank
+     */
     private DataSource buildTenantDataSource(String dbName) {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(driverClassName);
@@ -114,6 +137,15 @@ public class TenantDatabaseService {
         return dataSource;
     }
 
+    /**
+     * Erzeugt die JDBC-URL für eine konkrete Tenant-Datenbank.
+     *
+     * Beispiel:
+     * baseUrl = jdbc:mariadb://localhost:3306/
+     * dbName  = tenant_abc123
+     * Ergebnis:
+     * jdbc:mariadb://localhost:3306/tenant_abc123
+     */
     private String buildTenantJdbcUrl(String dbName) {
         String normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
         return normalizedBaseUrl + dbName;

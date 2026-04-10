@@ -6,8 +6,17 @@ import jakarta.validation.constraints.Size;
 public class CreateCompanyRequest {
 
     @NotBlank(message = "name darf nicht leer sein")
-    @Size(max = 100)
+    @Size(min = 1, max = 100, message = "name muss zwischen 1 und 100 Zeichen lang sein")
     public String name;
+
+    @Size(max = 5000, message = "summary darf maximal 5000 Zeichen haben")
+    public String summary;
+
+    @Size(max = 500)
+    public String url;
+
+    @Size(max = 500)
+    public String urlJobs;
 
     @Size(max = 150)
     public String mail;
@@ -20,13 +29,4 @@ public class CreateCompanyRequest {
 
     @Size(max = 100)
     public String telPerson;
-
-    @Size(max = 5000, message = "summary darf maximal 5000 Zeichen haben")
-    public String summary;
-
-    @Size(max = 500)
-    public String url;
-
-    @Size(max = 500)
-    public String urlJobs;
 }

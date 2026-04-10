@@ -1,13 +1,14 @@
 package info.kornhuber.jobsearch.config;
 
+import info.kornhuber.jobsearch.dto.error.ApiErrorResponse;
 import info.kornhuber.jobsearch.exception.BadRequestException;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-
-import java.util.Map;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,40 +22,93 @@ class GlobalExceptionHandlerTest {
         handler = new GlobalExceptionHandler();
     }
 
+    /**
+     * Hilfsmethode für Tests:
+     * Erzeugt ein Mock-Request-Objekt mit einer konkreten Request-URI.
+     *
+     * Warum?
+     * Der neue GlobalExceptionHandler schreibt den Request-Pfad in die Error-Response.
+     * Deshalb müssen wir im Test ein HttpServletRequest mitgeben.
+     */
+    private MockHttpServletRequest mockRequest(String uri) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI(uri);
+        return request;
+    }
+
     @Test
-    void handleNotFoundReturns404StyleBody() {
-        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    void handleNotFound_shouldReturn404Response() {
+        MockHttpServletRequest request = mockRequest("/api/companies/1");
 
-        Map<String, Object> response = handler.handleNotFound(new NotFoundException("Company not found: 1"));
+        ResponseEntity<ApiErrorResponse> response = handler.handleNotFound(
+                new NotFoundException("Company not found: 1"),
+                request
+        );
 
-        assertEquals("Company not found: 1", response.get("error"));
+        assertEquals(404, response.getStatusCode().value());
+
+        ApiErrorResponse body = response.getBody();
+        assertThat(body).isNotNull();
+        assertEquals("Not Found", body.error());
+        assertEquals("Company not found: 1", body.message());
+        assertEquals("/api/companies/1", body.path());
+        assertThat(body.fieldErrors()).isEmpty();
     }
 
     @Test
     void handleJsonParseError_shouldReturnFriendlyMessage() {
+        MockHttpServletRequest request = mockRequest("/api/companies");
+
         HttpMessageNotReadableException ex =
-                new HttpMessageNotReadableException("JSON parse error");
+                new HttpMessageNotReadableException("JSON parse error", (Throwable) null);
 
-        Map<String, Object> result = handler.handleJsonParseError(ex);
+        ResponseEntity<ApiErrorResponse> response = handler.handleJsonParseError(ex, request);
 
-        assertThat(result).containsEntry("error", "Ungültiger Enum-Wert im Request");
+        assertEquals(400, response.getStatusCode().value());
+
+        ApiErrorResponse body = response.getBody();
+        assertThat(body).isNotNull();
+        assertEquals("Bad Request", body.error());
+        assertEquals("Malformed JSON or invalid enum value in request body", body.message());
+        assertEquals("/api/companies", body.path());
+        assertThat(body.fieldErrors()).isEmpty();
     }
 
     @Test
-    void handleBadRequestReturnsErrorBody() {
-        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    void handleBadRequest_shouldReturn400Response() {
+        MockHttpServletRequest request = mockRequest("/api/auth/login");
 
-        Map<String, Object> response = handler.handleBadRequest(new BadRequestException("Ungültiger Request"));
+        ResponseEntity<ApiErrorResponse> response = handler.handleBadRequest(
+                new BadRequestException("Ungültiger Request"),
+                request
+        );
 
-        assertEquals("Ungültiger Request", response.get("error"));
+        assertEquals(400, response.getStatusCode().value());
+
+        ApiErrorResponse body = response.getBody();
+        assertThat(body).isNotNull();
+        assertEquals("Bad Request", body.error());
+        assertEquals("Ungültiger Request", body.message());
+        assertEquals("/api/auth/login", body.path());
+        assertThat(body.fieldErrors()).isEmpty();
     }
 
     @Test
-    void handleConflictReturnsErrorBody() {
-        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    void handleConflict_shouldReturn409Response() {
+        MockHttpServletRequest request = mockRequest("/api/auth/register");
 
-        Map<String, Object> response = handler.handleConflict(new ConflictException("Email existiert bereits"));
+        ResponseEntity<ApiErrorResponse> response = handler.handleConflict(
+                new ConflictException("Email existiert bereits"),
+                request
+        );
 
-        assertEquals("Email existiert bereits", response.get("error"));
+        assertEquals(409, response.getStatusCode().value());
+
+        ApiErrorResponse body = response.getBody();
+        assertThat(body).isNotNull();
+        assertEquals("Conflict", body.error());
+        assertEquals("Email existiert bereits", body.message());
+        assertEquals("/api/auth/register", body.path());
+        assertThat(body.fieldErrors()).isEmpty();
     }
 }

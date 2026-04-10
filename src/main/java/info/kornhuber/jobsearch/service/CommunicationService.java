@@ -216,7 +216,7 @@ public class CommunicationService {
         }
     }
 
-    public CommunicationResponseDTO findById(Integer id) {
+    public CommunicationResponseDTO getById(Integer id) {
         Communication c = communicationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Communication not found: " + id));
         return mapper.toDto(c);

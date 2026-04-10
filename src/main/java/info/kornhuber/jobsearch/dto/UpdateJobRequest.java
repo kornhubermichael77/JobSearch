@@ -22,6 +22,7 @@ public class UpdateJobRequest {
     public String text;
 
     @NotNull(message = "status darf nicht leer sein")
+    @Size(min = 1, max = 100, message = "status darf maximal 100 Zeichen haben")
     public JobStatus status;
 
     //@Email(message = "mail muss eine gültige E-Mail-Adresse sein")
