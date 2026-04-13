@@ -33,7 +33,6 @@ import static org.mockito.Mockito.*;
 
 /**
  * Tests für den JobService auf Basis der aktuellen, vereinfachten Logik:
- *
  * - Job-Erstellung nur mit bestehender companyId
  * - companyId wird beim Update nicht mehr geändert
  * - addressId wird nicht mehr über UpdateJobRequest geändert

@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  * Response-DTO für Adressen.
- *
  * Enthält sowohl die optionale companyId als auch die optionale ownerUserId,
  * damit der Client erkennen kann, in welchem Kontext die Adresse verwendet wird.
  */
@@ -30,7 +29,6 @@ public class AddressResponseDTO {
 
     /**
      * Optionale Hinweistexte zur zuletzt ausgeführten Operation.
-     *
      * Beispiel:
      * - "Die Adresse wurde automatisch auch der Firma des Jobs zugeordnet."
      */

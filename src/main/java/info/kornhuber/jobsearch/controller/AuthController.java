@@ -2,21 +2,12 @@ package info.kornhuber.jobsearch.controller;
 
 import info.kornhuber.jobsearch.auth.service.AuthService;
 import info.kornhuber.jobsearch.dto.ForgotPasswordRequest;
-import info.kornhuber.jobsearch.dto.LoginRequest;
 import info.kornhuber.jobsearch.dto.RegisterRequest;
 import info.kornhuber.jobsearch.dto.ResetPasswordRequest;
 import info.kornhuber.jobsearch.dto.UserResponseDTO;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.RememberMeServices;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.web.csrf.CsrfToken;
 
@@ -32,7 +23,6 @@ public class AuthController {
 
     /**
      * Registriert einen neuen Benutzer.
-     *
      * HTTP 201 signalisiert die erfolgreiche Erstellung der User-Ressource.
      */
     @PostMapping("/register")
@@ -53,7 +43,6 @@ public class AuthController {
 
     /**
      * Startet den Forgot-Password-Prozess.
-     *
      * HTTP 204 ist passend, weil der Request erfolgreich verarbeitet wurde,
      * aber kein Response-Body benötigt wird.
      */
@@ -65,7 +54,6 @@ public class AuthController {
 
     /**
      * Setzt das Passwort anhand eines Reset-Tokens zurück.
-     *
      * HTTP 204 ist passend, weil die Aktion erfolgreich war
      * und kein Response-Body zurückgegeben werden muss.
      */

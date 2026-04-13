@@ -30,7 +30,6 @@ public class JobController {
 
     /**
      * Liefert reduzierte Job-Daten für den Job-Filter.
-     *
      * API-Design:
      * Der Endpunkt heißt bewusst "options" statt "for-filter",
      * weil er damit eine darstellungsbezogene Ressource beschreibt
@@ -51,7 +50,6 @@ public class JobController {
 
     /**
      * Erstellt einen neuen Job.
-     *
      * HTTP 201 signalisiert dem Client, dass eine neue Ressource angelegt wurde.
      */
     @PostMapping
@@ -70,7 +68,6 @@ public class JobController {
 
     /**
      * Aktualisiert die dem Job zugewiesene Adresse.
-     *
      * Die Ressource in der URL ist "address", die konkrete Zieladresse wird weiterhin im Request-Body übergeben.
      */
     @PatchMapping("/{id}/address")
@@ -83,7 +80,6 @@ public class JobController {
 
     /**
      * Löscht einen Job.
-     *
      * HTTP 204 bedeutet:
      * Die Löschung war erfolgreich und der Response-Body ist leer.
      */

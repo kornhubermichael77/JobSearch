@@ -12,7 +12,6 @@ import java.util.List;
 
 /**
  * REST-Controller für Adressen.
- *
  * API-Design:
  * - Erstellung erfolgt immer in einem klaren Kontext
  *   - Company-Adresse

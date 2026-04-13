@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * Service für CRUD-Operationen rund um Adressen.
- *
  * - Adressen werden explizit entweder
  *   - für eine Company oder
  *   - für einen Job (und dessen Company) oder
@@ -100,7 +99,6 @@ public class AddressService {
 
     /**
      * Erstellt eine Adresse für den aktuell eingeloggten User.
-     *
      * Diese Adresse ist nicht an eine Company oder einen Job gebunden und dient der Berechnung des Arbeitsweges
      */
     public AddressResponseDTO createForCurrentUser(CreateAddressRequest req) {

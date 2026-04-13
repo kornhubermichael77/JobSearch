@@ -6,14 +6,11 @@ import java.time.LocalDateTime;
 
 /**
  * Request-DTO zum Erstellen einer Adresse.
- *
  * Wichtig:
  * Dieses DTO enthält bewusst KEIN jobId-Feld.
  * Der Erstellungskontext wird über den Endpunkt bestimmt:
- *
  * - POST /api/companies/{companyId}/addresses
  * - POST /api/users/me/addresses
- *
  * Dadurch ist die API klar und der Request fachlich sauber.
  */
 public class CreateAddressRequest {

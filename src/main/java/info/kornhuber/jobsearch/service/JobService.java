@@ -5,7 +5,6 @@ import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
 import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.enums.JobStatus;
-import info.kornhuber.jobsearch.exception.BadRequestException;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
 import info.kornhuber.jobsearch.mapper.JobMapper;
@@ -15,7 +14,6 @@ import info.kornhuber.jobsearch.domain.repository.JobRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class JobService {
