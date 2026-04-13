@@ -42,6 +42,20 @@ public class AddressController {
     }
 
     /**
+     * Erstellt eine Adresse für einen Job (sowie die zugehörige Firma).
+     */
+    // neuer Endpunkt!
+    @PostMapping("/jobs/{jobId}/addresses")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AddressResponseDTO createForJob(
+            @PathVariable Integer jobId,
+            @Valid @RequestBody CreateAddressRequest req
+    ) {
+        return service.createForJob(jobId, req);
+    }
+
+
+    /**
      * Erstellt eine Adresse für den aktuell eingeloggten User.
      */
     @PostMapping("/users/me/addresses")

@@ -197,6 +197,9 @@ public class CommunicationService {
                 if (address == null || address.isBlank()) {
                     throw new BadRequestException("Bei MAIL muss address gesetzt sein");
                 }
+                if (!(direction == CommunicationDirection.OUT || direction == CommunicationDirection.IN)) {
+                    throw new BadRequestException("Bei MAIL muss direction gesetzt sein (IN oder OUT)");
+                }
             }
             case PHONE -> {
                 if (number == null || number.isBlank()) {

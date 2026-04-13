@@ -1,6 +1,7 @@
 package info.kornhuber.jobsearch.dto;
 
 import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import info.kornhuber.jobsearch.enums.JobStatus;
 
@@ -39,4 +40,5 @@ public class JobResponseDTO {
     public String homeoffice;
     public String features;
     public Long communicationCount;
+
 }

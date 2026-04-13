@@ -15,6 +15,7 @@ import info.kornhuber.jobsearch.domain.repository.JobRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class JobService {
@@ -23,6 +24,7 @@ public class JobService {
     private final CompanyRepository companyRepository;
     private final AddressRepository addressRepository;
     private final JobMapper jobMapper;
+
 
     public JobService(
             JobRepository jobRepository,
@@ -95,7 +97,9 @@ public class JobService {
 
     public JobResponseDTO create(CreateJobRequest req) {
         Job job = new Job();
+
         apply(job, req);
+
         Job saved = jobRepository.save(job);
         return jobMapper.toDto(saved);
     }
@@ -110,21 +114,34 @@ public class JobService {
         return jobMapper.toDto(saved);
     }
 
+    /**
+     * Weist einem Job nachträglich eine Adresse zu.
+     *
+     * @param id ID des Jobs
+     * @param req beinhaltet die addressId, die dem Job nachträglich zugewiesen wird
+     * @return gespeicherte Job-Daten als DTO
+     */
     public JobResponseDTO updateJobAddress(Integer id, UpdateJobAddressRequest req) {
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Job not found: " + id));
 
         if (req.addressId != null) {
+            // dem Job wird eine Adresse zugewiesen
             Address address = addressRepository.findById(req.addressId)
                     .orElseThrow(() -> new NotFoundException("Address not found: " + req.addressId));
 
             if (job.getCompany() != null) {
-                if (address.getCompany() == null || !address.getCompany().getId().equals(job.getCompany().getId())) {
-                    address.setCompany(job.getCompany());
+                if (address.getCompany() == null) {
+                    throw new ConflictException("Address is not assigned to any company");
+                }
+
+                if (!address.getCompany().getId().equals(job.getCompany().getId())) {
+                    throw new ConflictException("Address does not belong to the job's company");
                 }
             }
             job.setAddress(address);
         } else {
+            // dem Job soll künftig keine Adresse mehr zugewiesen sein
             job.setAddress(null);
         }
 
@@ -140,11 +157,10 @@ public class JobService {
     }
 
     private void apply(Job job, CreateJobRequest req) {
-        Company company = resolveCompany(req);          // Hilfsmethode, siehe unten
-        Address address = resolveAddress(req, company); // Hilfsmethode, siehe unten
-
+        Company company = companyRepository.findById(req.companyId)
+                .orElseThrow(() -> new NotFoundException("Company not found: " + req.companyId));
         job.setCompany(company);
-        job.setAddress(address);
+
         job.setFound(req.found);
         job.setSource(req.source);
         job.setUrl(req.url);
@@ -162,36 +178,8 @@ public class JobService {
 
     /**
      * Apply changes from an UpdateJobRequest to a Job entity. (partielles Update!)
-     * lädt die Company, falls companyId gesetzt ist
-     * lädt die Address, falls addressId gesetzt ist
-     * prüft bei gesetzten beiden IDs, ob die Adresse wirklich zu dieser Firma gehört
-     * setzt erst danach die Werte am Job
      */
     private void apply(Job job, UpdateJobRequest req) {
-        Company company = job.getCompany();
-        Address address = job.getAddress();
-
-        if (req.companyId != null) {
-            company = companyRepository.findById(req.companyId)
-                    .orElseThrow(() -> new NotFoundException("Company not found: " + req.companyId));
-        }
-
-        if (req.addressId != null) {
-            address = addressRepository.findById(req.addressId)
-                    .orElseThrow(() -> new NotFoundException("Address not found: " + req.addressId));
-        }
-
-        if (company != null && address != null) {
-            if (address.getCompany() == null || !address.getCompany().getId().equals(company.getId())) {
-
-                address.setCompany(company);
-                addressRepository.save(address);
-                //                throw new ConflictException("Address does not belong to the selectedd company");
-            }
-        }
-
-        job.setCompany(company);
-        job.setAddress(address);
         job.setFound(req.found);
         job.setSource(req.source);
         job.setUrl(req.url);
@@ -205,66 +193,5 @@ public class JobService {
         job.setGleitzeit(req.gleitzeit);
         job.setHomeoffice(req.homeoffice);
         job.setFeatures(req.features);
-    }
-
-    private Company resolveCompany(CreateJobRequest req) {
-        if ((req.companyId != null && req.newCompany != null)
-                || (req.companyId == null && req.newCompany == null)) {
-            throw new BadRequestException("Either known company or new company must be set");
-        }
-
-        if (req.companyId != null) {
-            return companyRepository.findById(req.companyId)
-                    .orElseThrow(() -> new NotFoundException("Company not found: " + req.companyId));
-        }
-
-        Company company = new Company();
-        company.setName(req.newCompany.name);
-        company.setMail(req.newCompany.mail);
-        company.setMailPerson(req.newCompany.mailPerson);
-        company.setTel(req.newCompany.tel);
-        company.setTelPerson(req.newCompany.telPerson);
-        company.setSummary(req.newCompany.summary);
-        company.setUrl(req.newCompany.url);
-        company.setUrlJobs(req.newCompany.urlJobs);
-
-        return companyRepository.save(company);
-    }
-
-    private Address resolveAddress(CreateJobRequest req, Company company) {
-        if (req.addressId != null && req.newAddress != null) {
-            throw new BadRequestException("Only one of addressId or newAddress may be set");
-        }
-        // Todo: req.newAddress wird ev nie der Fall sein, weil Jobs nie gleichzeitig eine Adresse mitanlegen! Sauber entfernen!
-        if (req.addressId != null) {
-            Address address = addressRepository.findById(req.addressId)
-                    .orElseThrow(() -> new NotFoundException("Address not found: " + req.addressId));
-
-            if (!address.getCompany().getId().equals(company.getId())) {
-                throw new ConflictException("Address does not belong to the selected company");
-            } else if (address.getCompany() == null) {
-                address.setCompany(company);
-                address = addressRepository.save(address);
-            }
-
-            return address;
-        }
-
-        if (req.newAddress != null) {
-            Address address = new Address();
-            address.setStreet(req.newAddress.street);
-            address.setPostcode(req.newAddress.postcode);
-            address.setCity(req.newAddress.city);
-            address.setCountry(req.newAddress.country);
-            address.setNumber(req.newAddress.number);
-            address.setHeadquarter(req.newAddress.headquarter);
-            address.setDistance(req.newAddress.distance);
-            address.setTraveltime(req.newAddress.traveltime);
-            address.setCompany(company);
-
-            return addressRepository.save(address);
-        }
-
-        return null;
     }
 }

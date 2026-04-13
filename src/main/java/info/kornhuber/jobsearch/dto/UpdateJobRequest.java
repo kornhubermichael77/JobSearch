@@ -1,15 +1,15 @@
 package info.kornhuber.jobsearch.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import info.kornhuber.jobsearch.enums.JobStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
+@JsonInclude(JsonInclude.Include.NON_NULL) // verhindern, dass null-Felder im JSON auftauchen
 public class UpdateJobRequest {
 
-    public Integer companyId;
-    public Integer addressId;
     public LocalDateTime found;
 
     @Size(max = 150, message = "source darf maximal 150 Zeichen haben")
@@ -22,7 +22,6 @@ public class UpdateJobRequest {
     public String text;
 
     @NotNull(message = "status darf nicht leer sein")
-    @Size(min = 1, max = 100, message = "status darf maximal 100 Zeichen haben")
     public JobStatus status;
 
     //@Email(message = "mail muss eine gültige E-Mail-Adresse sein")

@@ -4,11 +4,14 @@ import info.kornhuber.jobsearch.auth.entity.UserEntity;
 import info.kornhuber.jobsearch.auth.service.CurrentUserService;
 import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
+import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.domain.repository.AddressRepository;
 import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
+import info.kornhuber.jobsearch.domain.repository.JobRepository;
 import info.kornhuber.jobsearch.dto.AddressResponseDTO;
 import info.kornhuber.jobsearch.dto.CreateAddressRequest;
 import info.kornhuber.jobsearch.dto.UpdateAddressRequest;
+import info.kornhuber.jobsearch.exception.BadRequestException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
 import info.kornhuber.jobsearch.mapper.AddressMapper;
 import org.springframework.stereotype.Service;
@@ -18,31 +21,31 @@ import java.util.List;
 /**
  * Service für CRUD-Operationen rund um Adressen.
  *
- * Wichtige API-Entscheidung:
- * - Adressen werden nicht mehr "für Job" erstellt
- * - eine Adresse wird explizit entweder
+ * - Adressen werden explizit entweder
  *   - für eine Company oder
+ *   - für einen Job (und dessen Company) oder
  *   - für den aktuell eingeloggten User
  *   erstellt
  *
- * Das macht die API klarer und reduziert implizite Logik im Request-Body.
  */
 @Service
 public class AddressService {
 
     private final AddressRepository addressRepository;
     private final CompanyRepository companyRepository;
+    private final JobRepository jobRepository;
     private final AddressMapper addressMapper;
     private final CurrentUserService currentUserService;
 
     public AddressService(
             AddressRepository addressRepository,
-            CompanyRepository companyRepository,
+            CompanyRepository companyRepository, JobRepository jobRepository,
             AddressMapper addressMapper,
             CurrentUserService currentUserService
     ) {
         this.addressRepository = addressRepository;
         this.companyRepository = companyRepository;
+        this.jobRepository = jobRepository;
         this.addressMapper = addressMapper;
         this.currentUserService = currentUserService;
     }
@@ -55,7 +58,6 @@ public class AddressService {
      * @return gespeicherte Adresse als DTO
      */
     public AddressResponseDTO createForCompany(Integer companyId, CreateAddressRequest req) {
-        UserEntity currentUser = currentUserService.requireCurrentUser();
 
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new NotFoundException("Company not found: " + companyId));
@@ -64,16 +66,42 @@ public class AddressService {
         applyFields(address, req);
 
         address.setCompany(company);
-        address.setOwnerUserId(currentUser.getId());
 
         Address saved = addressRepository.save(address);
         return addressMapper.toDto(saved);
     }
 
     /**
+     * Erstellt eine Adresse für einen konkreten Job.
+     *
+     * @param jobId ID des Jobs
+     * @param req   Request-Daten der Adresse
+     * @return gespeicherte Adresse als DTO
+     */
+    public AddressResponseDTO createForJob(Integer jobId, CreateAddressRequest req) {
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new NotFoundException("Job not found: " + jobId));
+        if (job.getCompany() == null) {
+            throw new BadRequestException("Job has no company assigned");
+        }
+        Company company = job.getCompany();
+
+        Address address = new Address();
+        applyFields(address, req);
+
+        address.setCompany(company);
+        Address saved = addressRepository.save(address);
+        AddressResponseDTO dto = addressMapper.toDto(saved);
+        // Meldung, dass diese Job-Adresse nun auch automatisch bei der Firma des Jobs eingetragen wurde (=Service-Feature).
+        dto.messages = List.of("Die Adresse wurde automatisch auch der Firma des Jobs zugeordnet.");
+        return dto;
+    }
+
+    /**
      * Erstellt eine Adresse für den aktuell eingeloggten User.
      *
-     * Diese Adresse ist nicht an eine Company gebunden.
+     * Diese Adresse ist nicht an eine Company oder einen Job gebunden und dient der Berechnung des Arbeitsweges
      */
     public AddressResponseDTO createForCurrentUser(CreateAddressRequest req) {
         UserEntity currentUser = currentUserService.requireCurrentUser();

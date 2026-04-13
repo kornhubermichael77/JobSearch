@@ -18,24 +18,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.web.csrf.CsrfToken;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService service;
-    private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository;
-    private final RememberMeServices rememberMeServices;
 
-    public AuthController(AuthService service,
-                          AuthenticationManager authenticationManager,
-                          SecurityContextRepository securityContextRepository,
-                          RememberMeServices rememberMeServices) {
+    public AuthController(AuthService service) {
         this.service = service;
-        this.authenticationManager = authenticationManager;
-        this.securityContextRepository = securityContextRepository;
-        this.rememberMeServices = rememberMeServices;
     }
 
     /**
@@ -49,34 +41,9 @@ public class AuthController {
         return service.register(req);
     }
 
-    /**
-     * Authentifiziert einen Benutzer und erstellt eine Session.
-     *
-     * HTTP 200 ist hier passend, da keine neue API-Ressource erstellt,
-     * sondern ein Login-Vorgang durchgeführt wird.
-     */
-    @PostMapping("/login")
-    public UserResponseDTO login(@Valid @RequestBody LoginRequest req,
-                                 HttpServletRequest request,
-                                 HttpServletResponse response) {
-
-        UsernamePasswordAuthenticationToken authRequest =
-                new UsernamePasswordAuthenticationToken(req.username, req.password);
-
-        Authentication authentication = authenticationManager.authenticate(authRequest);
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-
-        request.getSession(true);
-        securityContextRepository.saveContext(context, request, response);
-
-        if (req.rememberMe) {
-            rememberMeServices.loginSuccess(request, response, authentication);
-        }
-
-        return service.loadCurrentUser(authentication.getName());
+    @GetMapping("/csrf")
+    public CsrfToken csrf(CsrfToken csrfToken) {
+        return csrfToken;
     }
 
     @GetMapping("/me")

@@ -8,17 +8,9 @@ import java.time.LocalDateTime;
 
 public class CreateJobRequest {
 
-    // entweder bestehende Firma
+    @NotNull(message = "companyId darf nicht null sein")
     public Integer companyId;
-    // oder neue Firma
-    public CreateCompanyRequest newCompany;
 
-    // entweder bestehende Adresse
-    public Integer addressId;
-    // oder neue Adresse
-    public CreateAddressRequest newAddress;
-
-    // restliche Jobfelder ...
     public LocalDateTime found;
 
     @Size(max = 150, message = "source darf maximal 150 Zeichen haben")

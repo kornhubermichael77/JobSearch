@@ -71,9 +71,7 @@ public class JobController {
     /**
      * Aktualisiert die dem Job zugewiesene Adresse.
      *
-     * API-Design:
-     * Die Ressource in der URL ist "address", nicht das technische Feld "addressId".
-     * Die konkrete Zieladresse wird weiterhin im Request-Body übergeben.
+     * Die Ressource in der URL ist "address", die konkrete Zieladresse wird weiterhin im Request-Body übergeben.
      */
     @PatchMapping("/{id}/address")
     public JobResponseDTO updateJobAddress(

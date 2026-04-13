@@ -1,20 +1,20 @@
 package info.kornhuber.jobsearch.service;
 
-import info.kornhuber.jobsearch.dto.CreateAddressRequest;
-import info.kornhuber.jobsearch.dto.CreateCompanyRequest;
-import info.kornhuber.jobsearch.dto.CreateJobRequest;
-import info.kornhuber.jobsearch.dto.JobResponseDTO;
-import info.kornhuber.jobsearch.dto.UpdateJobRequest;
 import info.kornhuber.jobsearch.domain.entity.Address;
 import info.kornhuber.jobsearch.domain.entity.Company;
 import info.kornhuber.jobsearch.domain.entity.Job;
-import info.kornhuber.jobsearch.enums.JobStatus;
-import info.kornhuber.jobsearch.exception.BadRequestException;
-import info.kornhuber.jobsearch.exception.ConflictException;
-import info.kornhuber.jobsearch.mapper.JobMapper;
 import info.kornhuber.jobsearch.domain.repository.AddressRepository;
 import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
 import info.kornhuber.jobsearch.domain.repository.JobRepository;
+import info.kornhuber.jobsearch.domain.repository.projection.JobWithCommunicationCountProjection;
+import info.kornhuber.jobsearch.dto.CreateJobRequest;
+import info.kornhuber.jobsearch.dto.JobResponseDTO;
+import info.kornhuber.jobsearch.dto.UpdateJobAddressRequest;
+import info.kornhuber.jobsearch.dto.UpdateJobRequest;
+import info.kornhuber.jobsearch.enums.JobStatus;
+import info.kornhuber.jobsearch.exception.ConflictException;
+import info.kornhuber.jobsearch.exception.NotFoundException;
+import info.kornhuber.jobsearch.mapper.JobMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +22,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import info.kornhuber.jobsearch.domain.repository.projection.JobWithCommunicationCountProjection;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +31,14 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Tests für den JobService auf Basis der aktuellen, vereinfachten Logik:
+ *
+ * - Job-Erstellung nur mit bestehender companyId
+ * - companyId wird beim Update nicht mehr geändert
+ * - addressId wird nicht mehr über UpdateJobRequest geändert
+ * - Job-Adresse wird separat über updateJobAddress(...) gesetzt
+ */
 @ExtendWith(MockitoExtension.class)
 class JobServiceTest {
 
@@ -54,6 +61,7 @@ class JobServiceTest {
     private Company company2;
     private Address address1;
     private Address address2;
+    private Address addressWithoutCompany;
     private Job job;
     private JobResponseDTO jobResponse;
 
@@ -85,6 +93,12 @@ class JobServiceTest {
         address2.setCountry("Österreich");
         address2.setCompany(company2);
 
+        addressWithoutCompany = new Address();
+        addressWithoutCompany.setId(30);
+        addressWithoutCompany.setStreet("Freie Straße");
+        addressWithoutCompany.setCity("Wien");
+        addressWithoutCompany.setCompany(null);
+
         job = new Job();
         job.setId(100);
         job.setCompany(company1);
@@ -100,6 +114,7 @@ class JobServiceTest {
         jobResponse.status = JobStatus.BEWORBEN;
         jobResponse.source = "LinkedIn";
         jobResponse.found = LocalDateTime.of(2026, 3, 24, 10, 0);
+        jobResponse.communicationCount = 0L;
     }
 
     @Test
@@ -123,7 +138,7 @@ class JobServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.id).isEqualTo(100);
         assertThat(result.companyId).isEqualTo(1);
-        assertThat(result.addressId).isEqualTo(10); // kommt hier aus Mock-DTO
+        assertThat(result.status).isEqualTo(JobStatus.BEWORBEN);
 
         ArgumentCaptor<Job> captor = ArgumentCaptor.forClass(Job.class);
         verify(jobRepository).save(captor.capture());
@@ -131,167 +146,40 @@ class JobServiceTest {
         Job savedJob = captor.getValue();
         assertThat(savedJob.getCompany()).isEqualTo(company1);
         assertThat(savedJob.getAddress()).isNull();
-        assertThat(savedJob.getStatus()).isEqualTo(JobStatus.BEWORBEN);
         assertThat(savedJob.getSource()).isEqualTo("LinkedIn");
+        assertThat(savedJob.getFound()).isEqualTo(LocalDateTime.of(2026, 3, 24, 10, 0));
     }
 
     @Test
-    void create_shouldCreateJobWithNewCompany() {
+    void create_shouldThrowWhenCompanyDoesNotExist() {
         CreateJobRequest req = new CreateJobRequest();
-        req.status = JobStatus.BEWORBEN;
-        req.source = "LinkedIn";
-
-        req.newCompany = new CreateCompanyRequest();
-        req.newCompany.name = "Neue Firma";
-        req.newCompany.mail = "hr@neu.example";
-        req.newCompany.tel = "+43 1 123456";
-
-        Company savedCompany = new Company();
-        savedCompany.setId(99);
-        savedCompany.setName("Neue Firma");
-
-        when(companyRepository.save(any(Company.class))).thenReturn(savedCompany);
-        when(jobRepository.save(any(Job.class))).thenAnswer(invocation -> {
-            Job saved = invocation.getArgument(0);
-            saved.setId(100);
-            return saved;
-        });
-        when(jobMapper.toDto(any(Job.class))).thenReturn(jobResponse);
-
-        jobService.create(req);
-
-        verify(companyRepository).save(any(Company.class));
-
-        ArgumentCaptor<Job> captor = ArgumentCaptor.forClass(Job.class);
-        verify(jobRepository).save(captor.capture());
-
-        Job savedJob = captor.getValue();
-        assertThat(savedJob.getCompany()).isEqualTo(savedCompany);
-    }
-
-    @Test
-    void create_shouldCreateJobWithExistingCompanyAndExistingAddress() {
-        CreateJobRequest req = new CreateJobRequest();
-        req.companyId = 1;
-        req.addressId = 10;
+        req.companyId = 999;
         req.status = JobStatus.BEWORBEN;
 
-        when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
-        when(addressRepository.findById(10)).thenReturn(Optional.of(address1));
-        when(jobRepository.save(any(Job.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(jobMapper.toDto(any(Job.class))).thenReturn(jobResponse);
-
-        jobService.create(req);
-
-        ArgumentCaptor<Job> captor = ArgumentCaptor.forClass(Job.class);
-        verify(jobRepository).save(captor.capture());
-
-        Job savedJob = captor.getValue();
-        assertThat(savedJob.getCompany()).isEqualTo(company1);
-        assertThat(savedJob.getAddress()).isEqualTo(address1);
-    }
-
-    @Test
-    void create_shouldThrowWhenAddressDoesNotBelongToSelectedCompany() {
-        CreateJobRequest req = new CreateJobRequest();
-        req.companyId = 1;
-        req.addressId = 20;
-        req.status = JobStatus.BEWORBEN;
-
-        when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
-        when(addressRepository.findById(20)).thenReturn(Optional.of(address2));
+        when(companyRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(ConflictException.class)
-                .hasMessage("Address does not belong to the selected company");
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Company not found: 999");
 
         verify(jobRepository, never()).save(any());
     }
 
     @Test
-    void create_shouldThrowWhenBothCompanyIdAndNewCompanyAreSet() {
-        CreateJobRequest req = new CreateJobRequest();
-        req.companyId = 1;
-        req.newCompany = new CreateCompanyRequest();
-        req.newCompany.name = "Neue Firma";
-        req.status = JobStatus.BEWORBEN;
-
-        assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessage("Either known company or new company must be set");
-
-        verify(jobRepository, never()).save(any());
-    }
-
-    @Test
-    void create_shouldThrowWhenNeitherCompanyIdNorNewCompanyIsSet() {
-        CreateJobRequest req = new CreateJobRequest();
-        req.status = JobStatus.BEWORBEN;
-
-        assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessage("Either known company or new company must be set");
-
-        verify(jobRepository, never()).save(any());
-    }
-
-    @Test
-    void create_shouldThrowWhenBothAddressIdAndNewAddressAreSet() {
-        CreateJobRequest req = new CreateJobRequest();
-        req.companyId = 1;
-        req.addressId = 10;
-        req.newAddress = new CreateAddressRequest();
-        req.newAddress.city = "Wien";
-        req.status = JobStatus.BEWORBEN;
-
-        when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
-
-        assertThatThrownBy(() -> jobService.create(req))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessage("Only one of addressId or newAddress may be set");
-
-        verify(jobRepository, never()).save(any());
-    }
-
-    @Test
-    void create_shouldCreateJobWithNewAddressForResolvedCompany() {
-        CreateJobRequest req = new CreateJobRequest();
-        req.companyId = 1;
-        req.status = JobStatus.BEWORBEN;
-
-        req.newAddress = new CreateAddressRequest();
-        req.newAddress.street = "Neue Straße";
-        req.newAddress.number = "12";
-        req.newAddress.postcode = "1030";
-        req.newAddress.city = "Wien";
-        req.newAddress.country = "Österreich";
-
-        Address savedAddress = new Address();
-        savedAddress.setId(88);
-        savedAddress.setCompany(company1);
-
-        when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
-        when(addressRepository.save(any(Address.class))).thenReturn(savedAddress);
-        when(jobRepository.save(any(Job.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(jobMapper.toDto(any(Job.class))).thenReturn(jobResponse);
-
-        jobService.create(req);
-
-        verify(addressRepository).save(any(Address.class));
-
-        ArgumentCaptor<Job> captor = ArgumentCaptor.forClass(Job.class);
-        verify(jobRepository).save(captor.capture());
-
-        Job savedJob = captor.getValue();
-        assertThat(savedJob.getAddress()).isEqualTo(savedAddress);
-        assertThat(savedJob.getCompany()).isEqualTo(company1);
-    }
-
-    @Test
-    void update_shouldKeepExistingCompanyAndAddressWhenIdsAreNotProvided() {
+    void update_shouldUpdateMutableFieldsButKeepExistingCompanyAndAddress() {
         UpdateJobRequest req = new UpdateJobRequest();
         req.status = JobStatus.BEWORBEN;
         req.source = "Xing";
+        req.url = "https://example.com/job/100";
+        req.text = "Aktualisierte Notizen";
+        req.mail = "jobs@example.com";
+        req.mailPerson = "Anna HR";
+        req.tel = "+43 1 123456";
+        req.telPerson = "Anna";
+        req.teilzeit = "nein";
+        req.gleitzeit = "ja";
+        req.homeoffice = "teilweise";
+        req.features = "Java, Spring Boot";
 
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
         when(jobRepository.save(job)).thenReturn(job);
@@ -303,41 +191,78 @@ class JobServiceTest {
         assertThat(job.getAddress()).isEqualTo(address1);
         assertThat(job.getStatus()).isEqualTo(JobStatus.BEWORBEN);
         assertThat(job.getSource()).isEqualTo("Xing");
+        assertThat(job.getUrl()).isEqualTo("https://example.com/job/100");
+        assertThat(job.getText()).isEqualTo("Aktualisierte Notizen");
+        assertThat(job.getMail()).isEqualTo("jobs@example.com");
+        assertThat(job.getMailPerson()).isEqualTo("Anna HR");
+        assertThat(job.getTel()).isEqualTo("+43 1 123456");
+        assertThat(job.getTelPerson()).isEqualTo("Anna");
+        assertThat(job.getTeilzeit()).isEqualTo("nein");
+        assertThat(job.getGleitzeit()).isEqualTo("ja");
+        assertThat(job.getHomeoffice()).isEqualTo("teilweise");
+        assertThat(job.getFeatures()).isEqualTo("Java, Spring Boot");
     }
 
     @Test
-    void update_shouldChangeCompanyAndAddressWhenValidIdsAreProvided() {
-        UpdateJobRequest req = new UpdateJobRequest();
-        req.companyId = 2;
-        req.addressId = 20;
-        req.status = JobStatus.BEWORBEN;
+    void updateJobAddress_shouldAssignAddressWhenItBelongsToJobsCompany() {
+        UpdateJobAddressRequest req = new UpdateJobAddressRequest();
+        req.addressId = 10;
 
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
-        when(companyRepository.findById(2)).thenReturn(Optional.of(company2));
-        when(addressRepository.findById(20)).thenReturn(Optional.of(address2));
+        when(addressRepository.findById(10)).thenReturn(Optional.of(address1));
         when(jobRepository.save(job)).thenReturn(job);
         when(jobMapper.toDto(job)).thenReturn(jobResponse);
 
-        jobService.update(100, req);
+        JobResponseDTO result = jobService.updateJobAddress(100, req);
 
-        assertThat(job.getCompany()).isEqualTo(company2);
-        assertThat(job.getAddress()).isEqualTo(address2);
+        assertThat(result).isNotNull();
+        assertThat(job.getAddress()).isEqualTo(address1);
+
+        verify(jobRepository).save(job);
     }
 
     @Test
-    void update_shouldThrowWhenSelectedAddressDoesNotBelongToSelectedCompany() {
-        UpdateJobRequest req = new UpdateJobRequest();
-        req.companyId = 1;
-        req.addressId = 20;
-        req.status = JobStatus.BEWORBEN;
+    void updateJobAddress_shouldRemoveAddressAssignmentWhenAddressIdIsNull() {
+        UpdateJobAddressRequest req = new UpdateJobAddressRequest();
+        req.addressId = null;
 
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
-        when(companyRepository.findById(1)).thenReturn(Optional.of(company1));
+        when(jobRepository.save(job)).thenReturn(job);
+        when(jobMapper.toDto(job)).thenReturn(jobResponse);
+
+        jobService.updateJobAddress(100, req);
+
+        assertThat(job.getAddress()).isNull();
+        verify(jobRepository).save(job);
+        verify(addressRepository, never()).findById(any());
+    }
+
+    @Test
+    void updateJobAddress_shouldThrowWhenAddressDoesNotBelongToJobsCompany() {
+        UpdateJobAddressRequest req = new UpdateJobAddressRequest();
+        req.addressId = 20;
+
+        when(jobRepository.findById(100)).thenReturn(Optional.of(job));
         when(addressRepository.findById(20)).thenReturn(Optional.of(address2));
 
-        assertThatThrownBy(() -> jobService.update(100, req))
+        assertThatThrownBy(() -> jobService.updateJobAddress(100, req))
                 .isInstanceOf(ConflictException.class)
-                .hasMessage("Address does not belong to the selected company");
+                .hasMessage("Address does not belong to the job's company");
+
+        verify(jobRepository, never()).save(any());
+    }
+
+    @Test
+    void updateJobAddress_shouldThrowWhenAddressHasNoCompany() {
+        UpdateJobAddressRequest req = new UpdateJobAddressRequest();
+        req.addressId = 30;
+
+        when(jobRepository.findById(100)).thenReturn(Optional.of(job));
+        when(addressRepository.findById(30)).thenReturn(Optional.of(addressWithoutCompany));
+
+        assertThatThrownBy(() -> jobService.updateJobAddress(100, req))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Address is not assigned to any company");
 
         verify(jobRepository, never()).save(any());
     }
@@ -351,6 +276,7 @@ class JobServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.id).isEqualTo(100);
+        assertThat(result.companyId).isEqualTo(1);
     }
 
     @Test
@@ -364,6 +290,11 @@ class JobServiceTest {
         when(projection.getCity()).thenReturn("Wien");
         when(projection.getStreet()).thenReturn("Hauptstraße");
         when(projection.getNumber()).thenReturn("1");
+        when(projection.getPostcode()).thenReturn("1010");
+        when(projection.getCountry()).thenReturn("Österreich");
+        when(projection.getHeadquarter()).thenReturn(true);
+        when(projection.getDistance()).thenReturn(10.0);
+        when(projection.getTraveltime()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
         when(projection.getFound()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
         when(projection.getSource()).thenReturn("LinkedIn");
         when(projection.getUrl()).thenReturn(null);
@@ -404,6 +335,11 @@ class JobServiceTest {
         when(projection.getCity()).thenReturn("Wien");
         when(projection.getStreet()).thenReturn("Hauptstraße");
         when(projection.getNumber()).thenReturn("1");
+        when(projection.getPostcode()).thenReturn("1010");
+        when(projection.getCountry()).thenReturn("Österreich");
+        when(projection.getHeadquarter()).thenReturn(true);
+        when(projection.getDistance()).thenReturn(10.0);
+        when(projection.getTraveltime()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
         when(projection.getFound()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
         when(projection.getSource()).thenReturn("LinkedIn");
         when(projection.getUrl()).thenReturn(null);
@@ -432,6 +368,4 @@ class JobServiceTest {
 
         verify(jobRepository).findAllWithCommunicationCount(JobStatus.BEWORBEN, 3);
     }
-
-
 }
