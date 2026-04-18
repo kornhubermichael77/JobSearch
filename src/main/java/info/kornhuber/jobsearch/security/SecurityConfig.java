@@ -3,7 +3,6 @@ package info.kornhuber.jobsearch.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import info.kornhuber.jobsearch.config.RememberMeProperties;
 import info.kornhuber.jobsearch.multitenancy.TenantResolverFilter;
-import info.kornhuber.jobsearch.auth.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,14 +35,11 @@ import java.util.Map;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserRepository userRepository;
     private final RememberMeProperties rememberMeProperties;
     private final ObjectMapper objectMapper;
 
-    public SecurityConfig(UserRepository userRepository,
-                          RememberMeProperties rememberMeProperties,
+    public SecurityConfig(RememberMeProperties rememberMeProperties,
                           ObjectMapper objectMapper) {
-        this.userRepository = userRepository;
         this.rememberMeProperties = rememberMeProperties;
         this.objectMapper = objectMapper;
     }
@@ -114,7 +110,7 @@ public class SecurityConfig {
                         .useSecureCookie(rememberMeProperties.secureCookie())
                 )
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
-                .addFilterAfter(new TenantResolverFilter(userRepository), SecurityContextHolderFilter.class);
+                .addFilterAfter(new TenantResolverFilter(), SecurityContextHolderFilter.class);
 
         return http.build();
     }

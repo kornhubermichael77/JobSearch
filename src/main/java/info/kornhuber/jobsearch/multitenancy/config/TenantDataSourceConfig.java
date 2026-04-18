@@ -13,6 +13,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.util.HashMap;
 
 @Configuration
 @EnableJpaRepositories(
@@ -26,7 +27,12 @@ public class TenantDataSourceConfig {
     public TenantRoutingDataSource tenantRoutingDataSource(
             TenantDataSourceProvider tenantDataSourceProvider
     ) {
-        return new TenantRoutingDataSource(tenantDataSourceProvider);
+        TenantRoutingDataSource ds = new TenantRoutingDataSource(tenantDataSourceProvider);
+
+        ds.setTargetDataSources(new HashMap<>());
+        ds.setLenientFallback(false);
+
+        return ds;
     }
 
     @Bean

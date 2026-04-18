@@ -43,11 +43,6 @@ public class JobController {
         return service.getAllForFilter(status, companyId);
     }
 
-    @GetMapping("/{id}")
-    public JobResponseDTO getById(@PathVariable Integer id) {
-        return service.getById(id);
-    }
-
     /**
      * Erstellt einen neuen Job.
      * HTTP 201 signalisiert dem Client, dass eine neue Ressource angelegt wurde.

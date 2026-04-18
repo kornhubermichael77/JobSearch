@@ -19,6 +19,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import info.kornhuber.jobsearch.multitenancy.TenantResolutionException;
 
 import java.time.Instant;
 import java.util.List;
@@ -46,6 +47,19 @@ public class GlobalExceptionHandler {
                 "Request validation failed",
                 request.getRequestURI(),
                 fieldErrors
+        );
+    }
+
+    @ExceptionHandler(TenantResolutionException.class)
+    public ResponseEntity<ApiErrorResponse> handleTenantResolutionException(
+            TenantResolutionException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                ex.getMessage(),
+                request.getRequestURI()
         );
     }
 

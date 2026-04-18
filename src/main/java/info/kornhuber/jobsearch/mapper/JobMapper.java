@@ -49,9 +49,7 @@ public class JobMapper {
         dto.homeoffice = job.getHomeoffice();
         dto.features = job.getFeatures();
 
-        dto.communicationCount = job.getCommunications() != null
-                ? (long) job.getCommunications().size()
-                : 0L;
+        dto.communicationCount = 0L;
         return dto;
     }
 }

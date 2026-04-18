@@ -21,9 +21,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        return new User(
+        return new CustomUserPrincipal(
+                user.getId(),
                 user.getUsername(),
                 user.getPasswordHash(),
+                user.getEmail(),
+                user.getTenantDbName(),
+                Boolean.TRUE.equals(user.getEnabled()),
                 user.getRoles().stream()
                         .map(r -> new SimpleGrantedAuthority(r.getRoleName()))
                         .toList()

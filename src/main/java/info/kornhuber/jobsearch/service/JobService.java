@@ -7,10 +7,10 @@ import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.enums.JobStatus;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
-import info.kornhuber.jobsearch.mapper.JobMapper;
 import info.kornhuber.jobsearch.domain.repository.AddressRepository;
 import info.kornhuber.jobsearch.domain.repository.CompanyRepository;
 import info.kornhuber.jobsearch.domain.repository.JobRepository;
+import info.kornhuber.jobsearch.mapper.JobMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,7 +22,6 @@ public class JobService {
     private final CompanyRepository companyRepository;
     private final AddressRepository addressRepository;
     private final JobMapper jobMapper;
-
 
     public JobService(
             JobRepository jobRepository,
@@ -84,13 +83,6 @@ public class JobService {
                     return dto;
                 })
                 .toList();
-    }
-
-    public JobResponseDTO getById(Integer id) {
-        Job job = jobRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Job not found: " + id));
-
-        return jobMapper.toDto(job);
     }
 
     public JobResponseDTO create(CreateJobRequest req) {

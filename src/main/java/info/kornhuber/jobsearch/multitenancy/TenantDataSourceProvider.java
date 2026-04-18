@@ -23,19 +23,17 @@ public class TenantDataSourceProvider {
     private final Map<String, DataSource> cache = new ConcurrentHashMap<>();
 
     public DataSource getDataSource(String tenantId) {
-        String effectiveTenant = (tenantId == null || tenantId.isBlank())
-                ? "tenant_default"
-                : tenantId;
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new TenantResolutionException("Kein Tenant im TenantContext gesetzt");
+        }
 
-        return cache.computeIfAbsent(effectiveTenant, this::createDataSource);
+        return cache.computeIfAbsent(tenantId, this::createDataSource);
     }
 
     private DataSource createDataSource(String tenantId) {
-        String dbName = tenantId.equals("tenant_default") ? "jobsearch" : tenantId;
-
         return DataSourceBuilder.create()
                 .driverClassName("org.mariadb.jdbc.Driver")
-                .url(baseUrl + dbName)
+                .url(baseUrl + tenantId)
                 .username(username)
                 .password(password)
                 .build();

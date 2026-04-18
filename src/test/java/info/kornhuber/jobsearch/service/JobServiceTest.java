@@ -14,7 +14,6 @@ import info.kornhuber.jobsearch.dto.UpdateJobRequest;
 import info.kornhuber.jobsearch.enums.JobStatus;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
-import info.kornhuber.jobsearch.mapper.JobMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
