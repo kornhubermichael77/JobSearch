@@ -1,0 +1,83 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <style>
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .layer { font: 700 20px 'Segoe UI', Arial, sans-serif; fill: #334155; }
+      .label { font: 700 22px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .text { font: 18px 'Segoe UI', Arial, sans-serif; fill: #334155; }
+      .small { font: 16px 'Segoe UI', Arial, sans-serif; fill: #475569; }
+      .container { stroke: #cbd5e1; stroke-width: 2; rx: 18; ry: 18; }
+      .box { stroke: #1e293b; stroke-width: 2; rx: 20; ry: 20; }
+      .dashed { stroke-dasharray: 10 8; }
+      .arrow { stroke: #334155; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .soft { stroke: #64748b; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="940" fill="#f8fafc"/>
+  <text x="70" y="70" class="title">JobSearch Backend - Architekturüberblick</text>
+
+  <rect x="70" y="110" width="1260" height="150" class="container" fill="#f1f5f9"/>
+  <text x="95" y="145" class="layer">Präsentation / API-Schicht</text>
+
+  <rect x="120" y="165" width="250" height="70" class="box" fill="#dbeafe"/>
+  <text x="245" y="195" text-anchor="middle" class="label">Frontend / SPA</text>
+  <text x="245" y="220" text-anchor="middle" class="small">Browser, Screens, Forms</text>
+
+  <rect x="560" y="165" width="280" height="70" class="box" fill="#e0f2fe"/>
+  <text x="700" y="195" text-anchor="middle" class="label">REST Controller</text>
+  <text x="700" y="220" text-anchor="middle" class="small">Auth, Jobs, Timeline, Companies</text>
+
+  <rect x="980" y="165" width="250" height="70" class="box" fill="#fef3c7"/>
+  <text x="1105" y="195" text-anchor="middle" class="label">Mapper / DTOs</text>
+  <text x="1105" y="220" text-anchor="middle" class="small">API-Modelle, Request/Response</text>
+
+  <rect x="70" y="290" width="1260" height="190" class="container" fill="#f8fafc"/>
+  <text x="95" y="325" class="layer">Business-Schicht</text>
+
+  <rect x="560" y="348" width="280" height="75" class="box" fill="#dcfce7"/>
+  <text x="700" y="380" text-anchor="middle" class="label">Service Layer</text>
+  <text x="700" y="406" text-anchor="middle" class="small">Business Rules, Orchestrierung</text>
+
+  <rect x="980" y="320" width="250" height="130" class="box dashed" fill="#fae8ff"/>
+  <text x="1105" y="370" text-anchor="middle" class="label">Security</text>
+  <text x="1105" y="400" text-anchor="middle" class="small">Session, CSRF,</text>
+  <text x="1105" y="423" text-anchor="middle" class="small">Remember-Me</text>
+
+  <rect x="70" y="520" width="1260" height="330" class="container" fill="#f1f5f9"/>
+  <text x="95" y="555" class="layer">Persistenz- und Datenhaltungsschicht</text>
+
+  <rect x="105" y="615" width="280" height="90" class="box" fill="#e2e8f0"/>
+  <text x="245" y="652" text-anchor="middle" class="label">Auth-Datenbank</text>
+  <text x="245" y="680" text-anchor="middle" class="small">User, Roles, Reset Tokens</text>
+
+  <rect x="545" y="615" width="310" height="90" class="box" fill="#ede9fe"/>
+  <text x="700" y="652" text-anchor="middle" class="label">Repositories / JPA</text>
+  <text x="700" y="680" text-anchor="middle" class="small">Queries, Projektionen, Persistenz</text>
+
+  <rect x="960" y="615" width="290" height="90" class="box" fill="#fee2e2"/>
+  <text x="1105" y="648" text-anchor="middle" class="label">Tenant Routing</text>
+  <text x="1105" y="674" text-anchor="middle" class="small">TenantContext, Routing, Provisioning</text>
+
+  <rect x="960" y="745" width="290" height="90" class="box" fill="#ccfbf1"/>
+  <text x="1105" y="782" text-anchor="middle" class="label">Tenant-Datenbanken</text>
+  <text x="1105" y="810" text-anchor="middle" class="small">Jobs, Companies, Addresses, Timeline</text>
+
+  <text x="70" y="895" class="small">Kernaussage: klassischer Flow über Controller, Services und Repositories. Auth- und Tenant-Datenhaltung sind getrennt, Security wirkt als Querschnitt.</text>
+
+  <path d="M370 200 L560 200" class="arrow"/>
+  <path d="M700 235 L700 348" class="arrow"/>
+  <path d="M840 348 L980 235" class="arrow"/>
+  <path d="M700 423 L700 615" class="arrow"/>
+  <path d="M545 660 L385 660" class="arrow"/>
+  <path d="M855 660 L960 660" class="arrow"/>
+  <path d="M1105 705 L1105 745" class="arrow"/>
+
+  <path d="M980 385 L840 386" class="arrow soft dashed"/>
+  <path d="M980 385 L840 235" class="arrow soft dashed"/>
+</svg>
+
+

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="920" viewBox="0 0 1400 920">
+  <defs>
+    <style>
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .label { font: 700 22px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .meta { font: 15px 'Segoe UI', Arial, sans-serif; fill: #475569; }
+      .foot { font: 17px 'Segoe UI', Arial, sans-serif; fill: #334155; }
+      .box { stroke: #1e293b; stroke-width: 2; rx: 14; ry: 14; }
+      .line { stroke: #334155; stroke-width: 3; fill: none; }
+      .cardinality { font: 700 18px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="920" fill="#f8fafc"/>
+  <text x="70" y="70" class="title">Domain Model - ERD-Überblick</text>
+
+  <rect x="560" y="120" width="280" height="100" class="box" fill="#dbeafe"/>
+  <text x="700" y="165" text-anchor="middle" class="label">User</text>
+  <text x="700" y="195" text-anchor="middle" class="meta">Auth, Rollen, Tenant-Zuordnung</text>
+
+  <rect x="170" y="320" width="290" height="120" class="box" fill="#dcfce7"/>
+  <text x="315" y="370" text-anchor="middle" class="label">Company</text>
+  <text x="315" y="400" text-anchor="middle" class="meta">Stammdaten, Kontakte, URLs</text>
+
+  <rect x="560" y="320" width="280" height="120" class="box" fill="#fef3c7"/>
+  <text x="700" y="370" text-anchor="middle" class="label">Job</text>
+  <text x="700" y="400" text-anchor="middle" class="meta">Status, Quelle, Features, Ansprechpartner</text>
+
+  <rect x="150" y="590" width="330" height="170" class="box" fill="#fae8ff"/>
+  <text x="315" y="645" text-anchor="middle" class="label">Address</text>
+  <text x="315" y="680" text-anchor="middle" class="meta">Company kann mehrere Adressen haben</text>
+  <text x="315" y="710" text-anchor="middle" class="meta">Job kann optional genau eine Adresse haben</text>
+
+  <rect x="940" y="295" width="320" height="170" class="box" fill="#fee2e2"/>
+  <text x="1100" y="350" text-anchor="middle" class="label">Communication</text>
+  <text x="1100" y="385" text-anchor="middle" class="meta">Mail | Phone | Talk | Interview</text>
+  <text x="1100" y="415" text-anchor="middle" class="meta">Trial | Webform</text>
+  <text x="1100" y="445" text-anchor="middle" class="meta">nur Jobs können Communications haben</text>
+
+  <path d="M460 380 L560 380" class="line"/>
+  <path d="M315 440 L315 590" class="line"/>
+  <path d="M700 440 L700 515 L410 515 L410 590" class="line"/>
+  <path d="M840 380 L940 380" class="line"/>
+
+  <text x="478" y="360" class="cardinality">1</text>
+  <text x="535" y="360" class="cardinality">n</text>
+
+  <text x="332" y="470" class="cardinality">1</text>
+  <text x="332" y="575" class="cardinality">n</text>
+
+  <text x="590" y="498" class="cardinality">0..n</text>
+  <text x="405" y="500" class="cardinality">0..1</text>
+
+  <text x="853" y="360" class="cardinality">1</text>
+  <text x="915" y="360" class="cardinality">n</text>
+
+  <text x="170" y="830" class="foot">ERD-Lesart: Eine Company hat viele Jobs und viele Adressen.</text>
+  <text x="170" y="860" class="foot">Ein Job kann optional eine Adresse haben und viele Communications. User ist hier bewusst isoliert dargestellt.</text>
+</svg>

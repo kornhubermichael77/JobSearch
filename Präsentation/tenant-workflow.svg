@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800">
+  <defs>
+    <style>
+      .title { font: 700 34px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .stepTitle { font: 700 20px 'Segoe UI', Arial, sans-serif; fill: #0f172a; }
+      .text { font: 17px 'Segoe UI', Arial, sans-serif; fill: #334155; }
+      .num { font: 700 28px 'Segoe UI', Arial, sans-serif; fill: white; }
+      .arrow { stroke: #475569; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .card { stroke: #1e293b; stroke-width: 2; rx: 22; ry: 22; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="800" fill="#f8fafc"/>
+  <text x="70" y="70" class="title">Tenant-Workflow bei Registrierung und Request-Verarbeitung</text>
+
+  <rect x="80" y="180" width="230" height="220" class="card" fill="#dbeafe"/>
+  <text x="195" y="235" text-anchor="middle" class="stepTitle">User registriert sich</text>
+  <text x="195" y="275" text-anchor="middle" class="text">POST /api/auth/register</text>
+  <text x="195" y="305" text-anchor="middle" class="text">Username, E-Mail, Passwort</text>
+  <circle cx="195" cy="355" r="24" fill="#2563eb"/>
+  <text x="195" y="364" text-anchor="middle" class="num">1</text>
+
+  <rect x="360" y="180" width="230" height="220" class="card" fill="#dcfce7"/>
+  <text x="475" y="235" text-anchor="middle" class="stepTitle">Tenant-DB wird erzeugt</text>
+  <text x="475" y="275" text-anchor="middle" class="text">technischer Name per UUID</text>
+  <text x="475" y="305" text-anchor="middle" class="text">CREATE DATABASE</text>
+  <circle cx="475" cy="355" r="24" fill="#16a34a"/>
+  <text x="475" y="364" text-anchor="middle" class="num">2</text>
+
+  <rect x="640" y="180" width="230" height="220" class="card" fill="#fef3c7"/>
+  <text x="755" y="235" text-anchor="middle" class="stepTitle">Flyway migriert Schema</text>
+  <text x="755" y="275" text-anchor="middle" class="text">Tenant-Migrationen</text>
+  <text x="755" y="305" text-anchor="middle" class="text">aktueller Strukturstand</text>
+  <circle cx="755" cy="355" r="24" fill="#d97706"/>
+  <text x="755" y="364" text-anchor="middle" class="num">3</text>
+
+  <rect x="920" y="180" width="230" height="220" class="card" fill="#fae8ff"/>
+  <text x="1035" y="235" text-anchor="middle" class="stepTitle">User wird gespeichert</text>
+  <text x="1035" y="275" text-anchor="middle" class="text">Auth-DB enthält</text>
+  <text x="1035" y="305" text-anchor="middle" class="text">tenant_db_name</text>
+  <circle cx="1035" cy="355" r="24" fill="#9333ea"/>
+  <text x="1035" y="364" text-anchor="middle" class="num">4</text>
+
+  <rect x="250" y="500" width="290" height="200" class="card" fill="#e0f2fe"/>
+  <text x="395" y="555" text-anchor="middle" class="stepTitle">Login und Request</text>
+  <text x="395" y="595" text-anchor="middle" class="text">Spring Security authentifiziert</text>
+  <text x="395" y="625" text-anchor="middle" class="text">CustomUserPrincipal enthält Tenant</text>
+  <circle cx="395" cy="670" r="24" fill="#0891b2"/>
+  <text x="395" y="679" text-anchor="middle" class="num">5</text>
+
+  <rect x="620" y="500" width="290" height="200" class="card" fill="#fee2e2"/>
+  <text x="765" y="555" text-anchor="middle" class="stepTitle">TenantResolverFilter</text>
+  <text x="765" y="595" text-anchor="middle" class="text">setzt TenantContext pro Request</text>
+  <text x="765" y="625" text-anchor="middle" class="text">und leert ihn danach wieder</text>
+  <circle cx="765" cy="670" r="24" fill="#dc2626"/>
+  <text x="765" y="679" text-anchor="middle" class="num">6</text>
+
+  <rect x="990" y="500" width="290" height="200" class="card" fill="#ccfbf1"/>
+  <text x="1135" y="555" text-anchor="middle" class="stepTitle">Routing zur richtigen DB</text>
+  <text x="1135" y="595" text-anchor="middle" class="text">TenantRoutingDataSource</text>
+  <text x="1135" y="625" text-anchor="middle" class="text">liefert die passenden Fachdaten</text>
+  <circle cx="1135" cy="670" r="24" fill="#0f766e"/>
+  <text x="1135" y="679" text-anchor="middle" class="num">7</text>
+
+  <path d="M310 290 L360 290" class="arrow"/>
+  <path d="M590 290 L640 290" class="arrow"/>
+  <path d="M870 290 L920 290" class="arrow"/>
+  <path d="M1035 400 L1035 460 L395 460 L395 500" class="arrow"/>
+  <path d="M540 600 L620 600" class="arrow"/>
+  <path d="M910 600 L990 600" class="arrow"/>
+</svg>

@@ -9,11 +9,13 @@ import info.kornhuber.jobsearch.domain.repository.JobRepository;
 import info.kornhuber.jobsearch.domain.repository.projection.JobWithCommunicationCountProjection;
 import info.kornhuber.jobsearch.dto.CreateJobRequest;
 import info.kornhuber.jobsearch.dto.JobResponseDTO;
+import info.kornhuber.jobsearch.dto.JobsForFilterResponseDTO;
 import info.kornhuber.jobsearch.dto.UpdateJobAddressRequest;
 import info.kornhuber.jobsearch.dto.UpdateJobRequest;
 import info.kornhuber.jobsearch.enums.JobStatus;
 import info.kornhuber.jobsearch.exception.ConflictException;
 import info.kornhuber.jobsearch.exception.NotFoundException;
+import info.kornhuber.jobsearch.mapper.JobMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,17 +28,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * Tests für den JobService auf Basis der aktuellen, vereinfachten Logik:
- * - Job-Erstellung nur mit bestehender companyId
- * - companyId wird beim Update nicht mehr geändert
- * - addressId wird nicht mehr über UpdateJobRequest geändert
- * - Job-Adresse wird separat über updateJobAddress(...) gesetzt
- */
 @ExtendWith(MockitoExtension.class)
 class JobServiceTest {
 
@@ -95,7 +95,6 @@ class JobServiceTest {
         addressWithoutCompany.setId(30);
         addressWithoutCompany.setStreet("Freie Straße");
         addressWithoutCompany.setCity("Wien");
-        addressWithoutCompany.setCompany(null);
 
         job = new Job();
         job.setId(100);
@@ -133,7 +132,6 @@ class JobServiceTest {
 
         JobResponseDTO result = jobService.create(req);
 
-        assertThat(result).isNotNull();
         assertThat(result.id).isEqualTo(100);
         assertThat(result.companyId).isEqualTo(1);
         assertThat(result.status).isEqualTo(JobStatus.BEWORBEN);
@@ -183,8 +181,9 @@ class JobServiceTest {
         when(jobRepository.save(job)).thenReturn(job);
         when(jobMapper.toDto(job)).thenReturn(jobResponse);
 
-        jobService.update(100, req);
+        JobResponseDTO result = jobService.update(100, req);
 
+        assertThat(result).isEqualTo(jobResponse);
         assertThat(job.getCompany()).isEqualTo(company1);
         assertThat(job.getAddress()).isEqualTo(address1);
         assertThat(job.getStatus()).isEqualTo(JobStatus.BEWORBEN);
@@ -202,6 +201,18 @@ class JobServiceTest {
     }
 
     @Test
+    void update_shouldThrowWhenJobDoesNotExist() {
+        UpdateJobRequest req = new UpdateJobRequest();
+        req.status = JobStatus.BEWORBEN;
+
+        when(jobRepository.findById(404)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> jobService.update(404, req))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Job not found: 404");
+    }
+
+    @Test
     void updateJobAddress_shouldAssignAddressWhenItBelongsToJobsCompany() {
         UpdateJobAddressRequest req = new UpdateJobAddressRequest();
         req.addressId = 10;
@@ -213,9 +224,8 @@ class JobServiceTest {
 
         JobResponseDTO result = jobService.updateJobAddress(100, req);
 
-        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(jobResponse);
         assertThat(job.getAddress()).isEqualTo(address1);
-
         verify(jobRepository).save(job);
     }
 
@@ -266,92 +276,39 @@ class JobServiceTest {
     }
 
     @Test
-    void getById_shouldReturnMappedDto() {
+    void updateJobAddress_shouldThrowWhenJobDoesNotExist() {
+        UpdateJobAddressRequest req = new UpdateJobAddressRequest();
+        req.addressId = 10;
+
+        when(jobRepository.findById(404)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> jobService.updateJobAddress(404, req))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Job not found: 404");
+    }
+
+    @Test
+    void delete_shouldDeleteExistingJob() {
         when(jobRepository.findById(100)).thenReturn(Optional.of(job));
-        when(jobMapper.toDto(job)).thenReturn(jobResponse);
+        doNothing().when(jobRepository).delete(job);
 
-        JobResponseDTO result = jobService.getById(100);
+        jobService.delete(100);
 
-        assertThat(result).isNotNull();
-        assertThat(result.id).isEqualTo(100);
-        assertThat(result.companyId).isEqualTo(1);
+        verify(jobRepository).delete(job);
     }
 
     @Test
-    void getAll_shouldFilterByCompanyId() {
-        JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
+    void delete_shouldThrowWhenJobDoesNotExist() {
+        when(jobRepository.findById(404)).thenReturn(Optional.empty());
 
-        when(projection.getId()).thenReturn(100);
-        when(projection.getCompanyId()).thenReturn(3);
-        when(projection.getCompanyName()).thenReturn("OpenAI GmbH");
-        when(projection.getAddressId()).thenReturn(10);
-        when(projection.getCity()).thenReturn("Wien");
-        when(projection.getStreet()).thenReturn("Hauptstraße");
-        when(projection.getNumber()).thenReturn("1");
-        when(projection.getPostcode()).thenReturn("1010");
-        when(projection.getCountry()).thenReturn("Österreich");
-        when(projection.getHeadquarter()).thenReturn(true);
-        when(projection.getDistance()).thenReturn(10.0);
-        when(projection.getTraveltime()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
-        when(projection.getFound()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
-        when(projection.getSource()).thenReturn("LinkedIn");
-        when(projection.getUrl()).thenReturn(null);
-        when(projection.getText()).thenReturn(null);
-        when(projection.getStatus()).thenReturn(JobStatus.BEWORBEN);
-        when(projection.getMail()).thenReturn(null);
-        when(projection.getMailPerson()).thenReturn(null);
-        when(projection.getTel()).thenReturn(null);
-        when(projection.getTelPerson()).thenReturn(null);
-        when(projection.getTeilzeit()).thenReturn(null);
-        when(projection.getGleitzeit()).thenReturn(null);
-        when(projection.getHomeoffice()).thenReturn(null);
-        when(projection.getFeatures()).thenReturn(null);
-        when(projection.getCommunicationCount()).thenReturn(2L);
-
-        when(jobRepository.findAllWithCommunicationCount(null, 3))
-                .thenReturn(List.of(projection));
-
-        List<JobResponseDTO> result = jobService.getAll(null, 3);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().id).isEqualTo(100);
-        assertThat(result.getFirst().companyId).isEqualTo(3);
-        assertThat(result.getFirst().status).isEqualTo(JobStatus.BEWORBEN);
-        assertThat(result.getFirst().communicationCount).isEqualTo(2L);
-
-        verify(jobRepository).findAllWithCommunicationCount(null, 3);
+        assertThatThrownBy(() -> jobService.delete(404))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Job not found: 404");
     }
 
     @Test
-    void getAll_shouldFilterByStatusAndCompanyId() {
-        JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
-
-        when(projection.getId()).thenReturn(100);
-        when(projection.getCompanyId()).thenReturn(3);
-        when(projection.getCompanyName()).thenReturn("OpenAI GmbH");
-        when(projection.getAddressId()).thenReturn(10);
-        when(projection.getCity()).thenReturn("Wien");
-        when(projection.getStreet()).thenReturn("Hauptstraße");
-        when(projection.getNumber()).thenReturn("1");
-        when(projection.getPostcode()).thenReturn("1010");
-        when(projection.getCountry()).thenReturn("Österreich");
-        when(projection.getHeadquarter()).thenReturn(true);
-        when(projection.getDistance()).thenReturn(10.0);
-        when(projection.getTraveltime()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
-        when(projection.getFound()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
-        when(projection.getSource()).thenReturn("LinkedIn");
-        when(projection.getUrl()).thenReturn(null);
-        when(projection.getText()).thenReturn(null);
-        when(projection.getStatus()).thenReturn(JobStatus.BEWORBEN);
-        when(projection.getMail()).thenReturn(null);
-        when(projection.getMailPerson()).thenReturn(null);
-        when(projection.getTel()).thenReturn(null);
-        when(projection.getTelPerson()).thenReturn(null);
-        when(projection.getTeilzeit()).thenReturn(null);
-        when(projection.getGleitzeit()).thenReturn(null);
-        when(projection.getHomeoffice()).thenReturn(null);
-        when(projection.getFeatures()).thenReturn(null);
-        when(projection.getCommunicationCount()).thenReturn(3L);
+    void getAll_shouldMapProjectionToJobResponseDto() {
+        JobWithCommunicationCountProjection projection = mockProjection(3L);
 
         when(jobRepository.findAllWithCommunicationCount(JobStatus.BEWORBEN, 3))
                 .thenReturn(List.of(projection));
@@ -359,11 +316,80 @@ class JobServiceTest {
         List<JobResponseDTO> result = jobService.getAll(JobStatus.BEWORBEN, 3);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().id).isEqualTo(100);
-        assertThat(result.getFirst().companyId).isEqualTo(3);
-        assertThat(result.getFirst().status).isEqualTo(JobStatus.BEWORBEN);
-        assertThat(result.getFirst().communicationCount).isEqualTo(3L);
+        JobResponseDTO dto = result.getFirst();
+        assertThat(dto.id).isEqualTo(100);
+        assertThat(dto.companyId).isEqualTo(3);
+        assertThat(dto.companyName).isEqualTo("OpenAI GmbH");
+        assertThat(dto.addressId).isEqualTo(10);
+        assertThat(dto.status).isEqualTo(JobStatus.BEWORBEN);
+        assertThat(dto.communicationCount).isEqualTo(3L);
 
         verify(jobRepository).findAllWithCommunicationCount(JobStatus.BEWORBEN, 3);
+    }
+
+    @Test
+    void getAllForFilter_shouldReturnReducedJobDtos() {
+        JobWithCommunicationCountProjection projection = mockFilterProjection();
+
+        when(jobRepository.findAllWithCommunicationCount(null, 3))
+                .thenReturn(List.of(projection));
+
+        List<JobsForFilterResponseDTO> result = jobService.getAllForFilter(null, 3);
+
+        assertThat(result).hasSize(1);
+        JobsForFilterResponseDTO dto = result.getFirst();
+        assertThat(dto.id).isEqualTo(100);
+        assertThat(dto.companyId).isEqualTo(3);
+        assertThat(dto.companyName).isEqualTo("OpenAI GmbH");
+        assertThat(dto.source).isEqualTo("LinkedIn");
+        assertThat(dto.status).isEqualTo(JobStatus.BEWORBEN);
+
+        verify(jobRepository).findAllWithCommunicationCount(null, 3);
+    }
+
+    private JobWithCommunicationCountProjection mockProjection(Long communicationCount) {
+        JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
+
+        when(projection.getId()).thenReturn(100);
+        when(projection.getCompanyId()).thenReturn(3);
+        when(projection.getCompanyName()).thenReturn("OpenAI GmbH");
+        when(projection.getAddressId()).thenReturn(10);
+        when(projection.getCity()).thenReturn("Wien");
+        when(projection.getStreet()).thenReturn("Hauptstraße");
+        when(projection.getNumber()).thenReturn("1");
+        when(projection.getPostcode()).thenReturn("1010");
+        when(projection.getCountry()).thenReturn("Österreich");
+        when(projection.getHeadquarter()).thenReturn(true);
+        when(projection.getDistance()).thenReturn(10.0);
+        when(projection.getTraveltime()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
+        when(projection.getFound()).thenReturn(LocalDateTime.of(2026, 3, 24, 10, 0));
+        when(projection.getSource()).thenReturn("LinkedIn");
+        when(projection.getUrl()).thenReturn(null);
+        when(projection.getText()).thenReturn("Java Backend Stelle");
+        when(projection.getStatus()).thenReturn(JobStatus.BEWORBEN);
+        when(projection.getMail()).thenReturn(null);
+        when(projection.getMailPerson()).thenReturn(null);
+        when(projection.getTel()).thenReturn(null);
+        when(projection.getTelPerson()).thenReturn(null);
+        when(projection.getTeilzeit()).thenReturn(null);
+        when(projection.getGleitzeit()).thenReturn(null);
+        when(projection.getHomeoffice()).thenReturn(null);
+        when(projection.getFeatures()).thenReturn(null);
+        when(projection.getCommunicationCount()).thenReturn(communicationCount);
+
+        return projection;
+    }
+
+    private JobWithCommunicationCountProjection mockFilterProjection() {
+        JobWithCommunicationCountProjection projection = mock(JobWithCommunicationCountProjection.class);
+
+        when(projection.getId()).thenReturn(100);
+        when(projection.getCompanyId()).thenReturn(3);
+        when(projection.getCompanyName()).thenReturn("OpenAI GmbH");
+        when(projection.getSource()).thenReturn("LinkedIn");
+        when(projection.getText()).thenReturn("Java Backend Stelle");
+        when(projection.getStatus()).thenReturn(JobStatus.BEWORBEN);
+
+        return projection;
     }
 }
