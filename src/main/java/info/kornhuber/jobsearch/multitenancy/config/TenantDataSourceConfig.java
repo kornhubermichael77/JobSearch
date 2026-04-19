@@ -14,6 +14,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableJpaRepositories(
@@ -40,10 +41,16 @@ public class TenantDataSourceConfig {
             EntityManagerFactoryBuilder builder,
             @Qualifier("tenantRoutingDataSource") DataSource tenantRoutingDataSource
     ) {
+        Map<String, Object> jpaProperties = new HashMap<>();
+        // Avoid metadata access during startup when no request-bound tenant is available yet.
+        jpaProperties.put("hibernate.boot.allow_jdbc_metadata_access", false);
+        jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+
         return builder
                 .dataSource(tenantRoutingDataSource)
                 .packages("info.kornhuber.jobsearch.domain.entity")
                 .persistenceUnit("tenant")
+                .properties(jpaProperties)
                 .build();
     }
 

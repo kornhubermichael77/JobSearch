@@ -29,9 +29,6 @@ public class AuthDataSourceConfig {
     @Value("${spring.jpa.hibernate.ddl-auto:update}")
     private String ddlAuto;
 
-    @Value("${spring.jpa.properties.hibernate.dialect:org.hibernate.dialect.MariaDBDialect}")
-    private String hibernateDialect;
-
     @Primary
     @Bean
     @ConfigurationProperties("app.datasource.auth")
@@ -57,7 +54,6 @@ public class AuthDataSourceConfig {
     ) {
         Map<String, Object> jpaProperties = new HashMap<>();
         jpaProperties.put("hibernate.hbm2ddl.auto", ddlAuto);
-        jpaProperties.put("hibernate.dialect", hibernateDialect);
 
         return builder
                 .dataSource(authDataSource)
