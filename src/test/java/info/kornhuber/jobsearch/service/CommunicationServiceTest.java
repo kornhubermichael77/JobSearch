@@ -2,6 +2,7 @@ package info.kornhuber.jobsearch.service;
 
 import info.kornhuber.jobsearch.dto.CommunicationResponseDTO;
 import info.kornhuber.jobsearch.dto.CreateCommunicationRequest;
+import info.kornhuber.jobsearch.domain.entity.Communication;
 import info.kornhuber.jobsearch.domain.entity.Job;
 import info.kornhuber.jobsearch.domain.entity.PhoneCommunication;
 import info.kornhuber.jobsearch.dto.UpdateCommunicationRequest;
@@ -191,5 +192,29 @@ class CommunicationServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.id).isEqualTo(100);
         assertThat(result.type).isEqualTo(CommunicationType.PHONE);
+    }
+
+    @Test
+    void delete_shouldLoadAndDeleteExistingCommunication() {
+        when(communicationRepository.findById(100)).thenReturn(Optional.of(phoneCommunication));
+        doNothing().when(communicationRepository).delete(phoneCommunication);
+
+        communicationService.delete(100);
+
+        verify(communicationRepository).findById(100);
+        verify(communicationRepository).delete(phoneCommunication);
+        verify(communicationRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void delete_shouldThrowWhenCommunicationDoesNotExist() {
+        when(communicationRepository.findById(404)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> communicationService.delete(404))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Communication not found: 404");
+
+        verify(communicationRepository, never()).delete(any(Communication.class));
+        verify(communicationRepository, never()).deleteById(any());
     }
 }

@@ -38,7 +38,6 @@ public class CommunicationService {
 
     // wird vom CommunicationController aufgerufen, wenn etwas per POST kommt
     public CommunicationResponseDTO create(CreateCommunicationRequest req) {
-        //Communication c = createInstanceByType(req.type);
         Communication c = communicationFactory.create(req);
         // todo: phone.direction ev hier validieren
         applyCommonFields(c, req.jobId, req.date, req.person, req.role, req.content, req.sidemarks, req.status);
@@ -63,10 +62,10 @@ public class CommunicationService {
     }
 
     public void delete(Integer id) {
-        if (!communicationRepository.existsById(id)) {
-            throw new NotFoundException("Communication not found: " + id);
-        }
-        communicationRepository.deleteById(id);
+        Communication communication = communicationRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Communication not found: " + id));
+
+        communicationRepository.delete(communication);
     }
 
     private CommunicationType determineType(Communication c) {
