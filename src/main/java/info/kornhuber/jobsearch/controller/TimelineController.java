@@ -21,7 +21,7 @@ public class TimelineController {
     // Service-Objekt für Timeline-Generierung.
     private final TimelineService service;
 
-    // DI mit erstelltem "Service-Bean" (vgl. oberhalb!)
+    // Dependency Injection von TimelineService
     public TimelineController(TimelineService service) { // DI mit generierter Interface-Implementierung
         this.service = service;
     }

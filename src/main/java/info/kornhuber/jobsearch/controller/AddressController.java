@@ -43,7 +43,6 @@ public class AddressController {
     /**
      * Erstellt eine Adresse für einen Job (sowie die zugehörige Firma).
      */
-    // neuer Endpunkt!
     @PostMapping("/jobs/{jobId}/addresses")
     @ResponseStatus(HttpStatus.CREATED)
     public AddressResponseDTO createForJob(
